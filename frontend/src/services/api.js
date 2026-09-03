@@ -2,25 +2,40 @@
  * API Service for MPLAD AI Risk & Anomaly Intelligence System
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const RAW_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = RAW_URL.replace(/\/+$/, '');
 
-async function fetchJson(endpoint, options = {}) {
-  try {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-      },
-      ...options
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || `Request failed with status ${res.status}`);
+async function fetchJson(endpoint, options = {}, retries = 2) {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${API_BASE}${cleanEndpoint}`;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        },
+        ...options
+      });
+
+      if (!res.ok) {
+        if ([502, 503, 504].includes(res.status) && attempt < retries) {
+          await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        }
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `Request failed with status ${res.status}`);
+      }
+      return await res.json();
+    } catch (error) {
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+        continue;
+      }
+      console.error(`API Error on ${url}:`, error);
+      throw error;
     }
-    return await res.json();
-  } catch (error) {
-    console.error(`API Error on ${endpoint}:`, error);
-    throw error;
   }
 }
 

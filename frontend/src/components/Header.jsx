@@ -29,13 +29,19 @@ export const Header = ({
   const [pipelineHealthy, setPipelineHealthy] = useState(null);
 
   useEffect(() => {
-    api.getHealth()
-      .then((res) => {
-        setPipelineHealthy(res.status === 'healthy');
-      })
-      .catch(() => {
-        setPipelineHealthy(false);
-      });
+    let interval;
+    const checkHealth = () => {
+      api.getHealth()
+        .then((res) => {
+          setPipelineHealthy(res.status === 'healthy');
+        })
+        .catch(() => {
+          setPipelineHealthy(false);
+        });
+    };
+    checkHealth();
+    interval = setInterval(checkHealth, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   return (

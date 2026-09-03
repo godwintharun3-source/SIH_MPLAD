@@ -48,7 +48,7 @@ export const DashboardPage = () => {
     loadDashboard();
   }, []);
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (retryCount = 0) => {
     setLoading(true);
     setError(null);
     try {
@@ -62,7 +62,14 @@ export const DashboardPage = () => {
       setStatesAnalytics(stData);
     } catch (err) {
       console.error("Dashboard error:", err);
-      setError("Failed to load dashboard metrics. Ensure the backend server is running.");
+      if (retryCount < 4) {
+        setError("Waking up Cloud AI Server... (Render free tier wakes up in ~30s). Retrying automatically...");
+        setTimeout(() => {
+          loadDashboard(retryCount + 1);
+        }, 4000);
+      } else {
+        setError("Failed to load dashboard metrics. Ensure the backend server is running.");
+      }
     } finally {
       setLoading(false);
     }
