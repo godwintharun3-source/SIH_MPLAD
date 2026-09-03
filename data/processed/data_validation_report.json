@@ -1,0 +1,62 @@
+{
+  "validation_timestamp": "2026-09-02T21:12:18.394998",
+  "all_checks_passed": true,
+  "metrics": [
+    {
+      "metric": "total_allocated",
+      "calculated_value": 116767910107.42,
+      "reference_value": 116767910107.42,
+      "difference": -0.0,
+      "status": "EXACT_MATCH"
+    },
+    {
+      "metric": "total_expenditure",
+      "calculated_value": 39599356717.14,
+      "reference_value": 39599356717.14,
+      "difference": 0.0,
+      "status": "EXACT_MATCH"
+    },
+    {
+      "metric": "utilization_percentage",
+      "calculated_value": 33.9129,
+      "reference_value": 33.9129,
+      "difference": 0.0,
+      "status": "EXACT_MATCH"
+    },
+    {
+      "metric": "total_mps",
+      "calculated_value": 774,
+      "reference_value": 774,
+      "difference": 0,
+      "status": "EXACT_MATCH"
+    },
+    {
+      "metric": "total_works_completed",
+      "calculated_value": 43667,
+      "reference_value": 43667,
+      "difference": 0,
+      "status": "EXACT_MATCH"
+    },
+    {
+      "metric": "total_works_recommended",
+      "calculated_value": 83797,
+      "reference_value": 83797,
+      "difference": 0,
+      "status": "EXACT_MATCH"
+    },
+    {
+      "metric": "total_transactions",
+      "calculated_value": 107551,
+      "reference_value": 107551,
+      "difference": 0,
+      "status": "EXACT_MATCH"
+    }
+  ],
+  "derived_insights": {
+    "total_scored_projects": 126582,
+    "high_or_critical_risk_projects": 8,
+    "projects_requiring_verification": 80816,
+    "exact_duplicate_transactions_flagged": 38963,
+    "repeated_signature_transactions_flagged": 40114
+  }
+}

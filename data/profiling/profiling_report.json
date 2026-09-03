@@ -1,0 +1,1013 @@
+{
+  "profiling_date": "2026-08-29T00:21:56.589642",
+  "profiles": {
+    "mp_summary": {
+      "dataset_name": "mp_summary",
+      "file_name": "mplads_mp_summary_2026-08-28.csv",
+      "total_rows": 774,
+      "total_cols": 15,
+      "exact_duplicates": 0,
+      "columns": {
+        "MP Name": {
+          "dtype": "object",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 774,
+          "is_unique": true,
+          "is_numeric": false,
+          "sample_values": [
+            "Smt. S. Phangnon Konyak (2022-28)",
+            "Shri Arun Kumar Sagar ",
+            "S SUPONGMEREN JAMIR",
+            "VIJAYLAKSHMI DEVI",
+            "Smt Veena Devi "
+          ],
+          "numeric_stats": {}
+        },
+        "Constituency": {
+          "dtype": "object",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 541,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Sitting Rajya Sabha",
+            "SHAHJAHANPUR",
+            "NAGALAND",
+            "SIWAN",
+            "VAISHALI"
+          ],
+          "numeric_stats": {}
+        },
+        "State": {
+          "dtype": "object",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 36,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Nagaland",
+            "Uttar Pradesh",
+            "Nagaland",
+            "Bihar",
+            "Bihar"
+          ],
+          "numeric_stats": {}
+        },
+        "House": {
+          "dtype": "object",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Rajya Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha"
+          ],
+          "numeric_stats": {}
+        },
+        "Allocated Amount (\u20b9)": {
+          "dtype": "float64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 219,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            206563957.11,
+            147000000.0,
+            147000000.0,
+            147000000.0,
+            147000000.0
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 327477390.86,
+            "mean": 150862932.96,
+            "median": 147000000.0,
+            "sum": 116767910107.42
+          }
+        },
+        "Total Expenditure (\u20b9)": {
+          "dtype": "float64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 700,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            196106200.0,
+            138723000.0,
+            138150000.0,
+            134748616.0,
+            131108889.0
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 207877791.0,
+            "mean": 51161959.58,
+            "median": 46179540.0,
+            "sum": 39599356717.14
+          }
+        },
+        "Utilization %": {
+          "dtype": "float64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 657,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            94.94,
+            94.37,
+            93.98,
+            91.67,
+            89.19
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 94.94,
+            "mean": 31.47,
+            "median": 29.63,
+            "sum": 24356.88
+          }
+        },
+        "Completed Works": {
+          "dtype": "int64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 194,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            57,
+            4,
+            38,
+            95,
+            30
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 725.0,
+            "mean": 56.42,
+            "median": 31.0,
+            "sum": 43667.0
+          }
+        },
+        "Recommended Works": {
+          "dtype": "int64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 271,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            20,
+            3,
+            18,
+            87,
+            29
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 1356.0,
+            "mean": 108.26,
+            "median": 82.0,
+            "sum": 83797.0
+          }
+        },
+        "Completion Rate %": {
+          "dtype": "float64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 585,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            74.03,
+            57.14,
+            67.86,
+            52.2,
+            50.85
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 96.61,
+            "mean": 28.09,
+            "median": 23.83,
+            "sum": 21745.13
+          }
+        },
+        "Unspent Amount (\u20b9)": {
+          "dtype": "float64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 713,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            10457757.110000014,
+            8277000.0,
+            8850000.0,
+            12251384.0,
+            15891111.0
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 292768720.86,
+            "mean": 99700973.37,
+            "median": 98628901.56,
+            "sum": 77168553390.28
+          }
+        },
+        "Transaction Count": {
+          "dtype": "int64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 320,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            123,
+            45,
+            81,
+            142,
+            49
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 1476.0,
+            "mean": 138.95,
+            "median": 78.0,
+            "sum": 107551.0
+          }
+        },
+        "Successful Payments": {
+          "dtype": "int64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 305,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            123,
+            45,
+            81,
+            135,
+            49
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 1411.0,
+            "mean": 135.06,
+            "median": 77.5,
+            "sum": 104536.0
+          }
+        },
+        "Pending Payments": {
+          "dtype": "int64",
+          "non_null_count": 774,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 44,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            0,
+            0,
+            0,
+            7,
+            0
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 121.0,
+            "mean": 3.9,
+            "median": 1.0,
+            "sum": 3015.0
+          }
+        },
+        "Average Rating": {
+          "dtype": "float64",
+          "non_null_count": 4,
+          "null_count": 770,
+          "null_pct": 99.48,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            1.0,
+            5.0,
+            1.0,
+            1.0
+          ],
+          "numeric_stats": {
+            "min": 1.0,
+            "max": 5.0,
+            "mean": 2.0,
+            "median": 1.0,
+            "sum": 8.0
+          }
+        }
+      }
+    },
+    "expenditures": {
+      "dataset_name": "expenditures",
+      "file_name": "mplads_expenditures_2026-08-28.csv",
+      "total_rows": 107551,
+      "total_cols": 10,
+      "exact_duplicates": 32184,
+      "columns": {
+        "MP Name": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 699,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "ZIA UR REHMAN",
+            "ZIA UR REHMAN",
+            "ZIA UR REHMAN",
+            "Putta Mahesh Kumar",
+            "BABU SINGH KUSHWAHA"
+          ],
+          "numeric_stats": {}
+        },
+        "Constituency": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 530,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "SAMBHAL",
+            "SAMBHAL",
+            "SAMBHAL",
+            "ELURU",
+            "JAUNPUR"
+          ],
+          "numeric_stats": {}
+        },
+        "State": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 35,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Uttar Pradesh",
+            "Uttar Pradesh",
+            "Uttar Pradesh",
+            "Andhra Pradesh",
+            "Uttar Pradesh"
+          ],
+          "numeric_stats": {}
+        },
+        "House": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha"
+          ],
+          "numeric_stats": {}
+        },
+        "Work Description": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 112,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Lighting of public spaces",
+            "Lighting of public spaces",
+            "Lighting of public spaces",
+            "Construction of veterinary hospitals and dispensaries",
+            "Street lights"
+          ],
+          "numeric_stats": {}
+        },
+        "Vendor": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 27871,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "R G SUPLLIER",
+            "R G SUPLLIER",
+            "R G SUPLLIER",
+            "VIJAYA VIKRAM CONSTRUCTIONS",
+            "Ajay Kumar Singh"
+          ],
+          "numeric_stats": {}
+        },
+        "IDA": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 763,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "SAMBHAL(DISTRICT MAGISTRAE BHIMNAGAR SAMBHAL_IDA)",
+            "SAMBHAL(DISTRICT MAGISTRAE BHIMNAGAR SAMBHAL_IDA)",
+            "SAMBHAL(DISTRICT MAGISTRAE BHIMNAGAR SAMBHAL_IDA)",
+            "Kakinada(DISTRICT COLLECTOR KAKINADA_IDA)",
+            "JAUNPUR(DISTRICT MAGISTRATE JAUNPUR_IDA)"
+          ],
+          "numeric_stats": {}
+        },
+        "Expenditure Amount (\u20b9)": {
+          "dtype": "float64",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 39246,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            36159.0,
+            36159.0,
+            36159.0,
+            1097173.0,
+            19992.0
+          ],
+          "numeric_stats": {
+            "min": 0.01,
+            "max": 32562250.0,
+            "mean": 368191.43,
+            "median": 199960.0,
+            "sum": 39599356717.14
+          }
+        },
+        "Expenditure Date": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 979,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "2026-08-20T00:00:00.000Z",
+            "2026-08-20T00:00:00.000Z",
+            "2026-08-20T00:00:00.000Z",
+            "2026-08-27T00:00:00.000Z",
+            "2026-07-23T00:00:00.000Z"
+          ],
+          "numeric_stats": {}
+        },
+        "Payment Status": {
+          "dtype": "object",
+          "non_null_count": 107551,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Payment In-Progress",
+            "Payment In-Progress",
+            "Payment In-Progress",
+            "Payment In-Progress",
+            "Payment In-Progress"
+          ],
+          "numeric_stats": {}
+        }
+      }
+    },
+    "recommended_works": {
+      "dataset_name": "recommended_works",
+      "file_name": "mplads_recommended_works_2026-08-28.csv",
+      "total_rows": 83797,
+      "total_cols": 11,
+      "exact_duplicates": 0,
+      "columns": {
+        "Work ID": {
+          "dtype": "int64",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 83782,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            175556,
+            175559,
+            175561,
+            183102,
+            187484
+          ],
+          "numeric_stats": {
+            "min": 149.0,
+            "max": 309072.0,
+            "mean": 238551.92,
+            "median": 250667.0,
+            "sum": 19989935289.0
+          }
+        },
+        "Work Description": {
+          "dtype": "object",
+          "non_null_count": 83747,
+          "null_count": 50,
+          "null_pct": 0.06,
+          "unique_count": 77331,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Repair and renovation of road from CPWD complex, Ranchi Tikrey Dairyfarm to Fisheries Quarter, Port Blair",
+            "Extension of Multipurpse Hall at Nayagaon near Juvenile Home, Port Blair",
+            "Construction of CC Motorable road between Govt. Primary School and Shri SK Singh house at Garacharma, Ward No.18, Port Blair",
+            "Con. Bore well with water tank (60000 Ltr capacity), boundary wall with gate, parking space, toilets with bathroom, drainage system, rain harvesting system at Sri Guruji Community Centre, Dollygunj",
+            "Construction of Open Community Hall near Airport junction at Shibpur Ward No.3, Shipbur GP, Diglipur Tehsil"
+          ],
+          "numeric_stats": {}
+        },
+        "Category": {
+          "dtype": "object",
+          "non_null_count": 83792,
+          "null_count": 5,
+          "null_pct": 0.01,
+          "unique_count": 4,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Repair and Renovation",
+            "Normal/Others",
+            "Normal/Others",
+            "Trust and Society",
+            "Normal/Others"
+          ],
+          "numeric_stats": {}
+        },
+        "MP Name": {
+          "dtype": "object",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 727,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "BISHNU PADA RAY",
+            "BISHNU PADA RAY",
+            "BISHNU PADA RAY",
+            "BISHNU PADA RAY",
+            "BISHNU PADA RAY"
+          ],
+          "numeric_stats": {}
+        },
+        "Constituency": {
+          "dtype": "object",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 537,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "ANDAMAN AND NICOBAR ISLANDS",
+            "ANDAMAN AND NICOBAR ISLANDS",
+            "ANDAMAN AND NICOBAR ISLANDS",
+            "ANDAMAN AND NICOBAR ISLANDS",
+            "ANDAMAN AND NICOBAR ISLANDS"
+          ],
+          "numeric_stats": {}
+        },
+        "State": {
+          "dtype": "object",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 36,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Andaman And Nicobar Islands",
+            "Andaman And Nicobar Islands",
+            "Andaman And Nicobar Islands",
+            "Andaman And Nicobar Islands",
+            "Andaman And Nicobar Islands"
+          ],
+          "numeric_stats": {}
+        },
+        "House": {
+          "dtype": "object",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha"
+          ],
+          "numeric_stats": {}
+        },
+        "Recommended Amount (\u20b9)": {
+          "dtype": "float64",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 6255,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            4947034.0,
+            976436.0,
+            1498887.0,
+            4992971.0,
+            2899877.0
+          ],
+          "numeric_stats": {
+            "min": 1.0,
+            "max": 99965000.0,
+            "mean": 644903.68,
+            "median": 400000.0,
+            "sum": 54040993426.66
+          }
+        },
+        "Recommendation Date": {
+          "dtype": "object",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 918,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "2025-02-14T00:00:00.000Z",
+            "2025-02-14T00:00:00.000Z",
+            "2025-02-14T00:00:00.000Z",
+            "2025-03-18T00:00:00.000Z",
+            "2025-03-28T00:00:00.000Z"
+          ],
+          "numeric_stats": {}
+        },
+        "Has Images": {
+          "dtype": "bool",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 1.0,
+            "mean": 0.0,
+            "median": 0.0,
+            "sum": 211.0
+          }
+        },
+        "IDA": {
+          "dtype": "object",
+          "non_null_count": 83797,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 757,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "SOUTH ANDAMANS(Implementing District Authority(SA))",
+            "SOUTH ANDAMANS(Implementing District Authority(SA))",
+            "SOUTH ANDAMANS(Implementing District Authority(SA))",
+            "SOUTH ANDAMANS(Implementing District Authority(SA))",
+            "NORTH AND MIDDLE ANDAMAN(Implementing District Authority(N&MA))"
+          ],
+          "numeric_stats": {}
+        }
+      }
+    },
+    "completed_works": {
+      "dataset_name": "completed_works",
+      "file_name": "mplads_completed_works_2026-08-28.csv",
+      "total_rows": 43667,
+      "total_cols": 12,
+      "exact_duplicates": 0,
+      "columns": {
+        "Work ID": {
+          "dtype": "int64",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 43667,
+          "is_unique": true,
+          "is_numeric": true,
+          "sample_values": [
+            134703,
+            135593,
+            135595,
+            135639,
+            135640
+          ],
+          "numeric_stats": {
+            "min": 1211.0,
+            "max": 292762.0,
+            "mean": 176661.93,
+            "median": 178634.0,
+            "sum": 7714296597.0
+          }
+        },
+        "Work Description": {
+          "dtype": "object",
+          "non_null_count": 43582,
+          "null_count": 85,
+          "null_pct": 0.19,
+          "unique_count": 38346,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Upgradation of Road from Madhavaram Village to Company Indlu of Madhavaram GP",
+            "Construction of CC Road from Amudala Village to AmudalaHW in Amudala Village&GP of Palasamudram MAndal of GD Nellore Constituency",
+            "Construction of CC road from Amudala Village to Amudala ST colony in Amudala Village & GP of Palasamudram Mandal of GD Nelloore Constituency",
+            "Construction of Under Ground Drainage at Thalaripalli HW(Reach 1) H/O Ramakrishnapuram GP in Penumuru Mandal of GD Nelloore Constituency.",
+            "Construction of Under Ground Draiange at Thalaripalli HW(Reach II) H/O Ramakrishnapuram GP in Penumuru Mandal of GD Nellore Constituency."
+          ],
+          "numeric_stats": {}
+        },
+        "Category": {
+          "dtype": "object",
+          "non_null_count": 43662,
+          "null_count": 5,
+          "null_pct": 0.01,
+          "unique_count": 4,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Normal/Others",
+            "Normal/Others",
+            "Normal/Others",
+            "Normal/Others",
+            "Normal/Others"
+          ],
+          "numeric_stats": {}
+        },
+        "MP Name": {
+          "dtype": "object",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 656,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "DAGGUMALLA PRASADA RAO",
+            "DAGGUMALLA PRASADA RAO",
+            "DAGGUMALLA PRASADA RAO",
+            "DAGGUMALLA PRASADA RAO",
+            "DAGGUMALLA PRASADA RAO"
+          ],
+          "numeric_stats": {}
+        },
+        "Constituency": {
+          "dtype": "object",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 500,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "CHITTOOR",
+            "CHITTOOR",
+            "CHITTOOR",
+            "CHITTOOR",
+            "CHITTOOR"
+          ],
+          "numeric_stats": {}
+        },
+        "State": {
+          "dtype": "object",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 33,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Andhra Pradesh",
+            "Andhra Pradesh",
+            "Andhra Pradesh",
+            "Andhra Pradesh",
+            "Andhra Pradesh"
+          ],
+          "numeric_stats": {}
+        },
+        "House": {
+          "dtype": "object",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha",
+            "Lok Sabha"
+          ],
+          "numeric_stats": {}
+        },
+        "Final Amount (\u20b9)": {
+          "dtype": "float64",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 16462,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            499993.0,
+            448722.0,
+            448970.0,
+            440871.0,
+            500000.0
+          ],
+          "numeric_stats": {
+            "min": 8448.0,
+            "max": 46470400.0,
+            "mean": 545766.98,
+            "median": 300000.0,
+            "sum": 23832006686.61
+          }
+        },
+        "Completed Date": {
+          "dtype": "object",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 797,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "2025-01-31T00:00:00.000Z",
+            "2024-12-05T00:00:00.000Z",
+            "2024-12-05T00:00:00.000Z",
+            "2025-08-20T00:00:00.000Z",
+            "2025-03-03T00:00:00.000Z"
+          ],
+          "numeric_stats": {}
+        },
+        "Has Images": {
+          "dtype": "bool",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "numeric_stats": {
+            "min": 0.0,
+            "max": 1.0,
+            "mean": 0.71,
+            "median": 1.0,
+            "sum": 30921.0
+          }
+        },
+        "Average Rating": {
+          "dtype": "float64",
+          "non_null_count": 4,
+          "null_count": 43663,
+          "null_pct": 99.99,
+          "unique_count": 2,
+          "is_unique": false,
+          "is_numeric": true,
+          "sample_values": [
+            5.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "numeric_stats": {
+            "min": 1.0,
+            "max": 5.0,
+            "mean": 2.0,
+            "median": 1.0,
+            "sum": 8.0
+          }
+        },
+        "IDA": {
+          "dtype": "object",
+          "non_null_count": 43667,
+          "null_count": 0,
+          "null_pct": 0.0,
+          "unique_count": 702,
+          "is_unique": false,
+          "is_numeric": false,
+          "sample_values": [
+            "CHITTOOR(DISTRICT COLLECTOR CHITTOOR_IDA)",
+            "CHITTOOR(DISTRICT COLLECTOR CHITTOOR_IDA)",
+            "CHITTOOR(DISTRICT COLLECTOR CHITTOOR_IDA)",
+            "CHITTOOR(DISTRICT COLLECTOR CHITTOOR_IDA)",
+            "CHITTOOR(DISTRICT COLLECTOR CHITTOOR_IDA)"
+          ],
+          "numeric_stats": {}
+        }
+      }
+    }
+  },
+  "json_reference": {
+    "total_allocated": 116767910107.42,
+    "total_expenditure": 39599356717.14,
+    "utilization_percentage": 33.9129,
+    "total_mps": 774,
+    "total_works_completed": 43667,
+    "total_works_recommended": 83797,
+    "completion_rate": 52.1105,
+    "total_transactions": 107551,
+    "pending_works": 40130,
+    "source_date": "2026-08-28"
+  },
+  "join_analysis": {
+    "work_id_overlap": {
+      "recommended_unique_ids": 83782,
+      "completed_unique_ids": 43667,
+      "matched_unique_ids": 392,
+      "completed_not_in_recommended": 43275,
+      "recommended_not_in_completed": 83390,
+      "recommended_duplicate_ids": 15,
+      "completed_duplicate_ids": 0
+    },
+    "expenditure_keys": {
+      "has_work_id": false,
+      "columns": [
+        "MP Name",
+        "Constituency",
+        "State",
+        "House",
+        "Work Description",
+        "Vendor",
+        "IDA",
+        "Expenditure Amount (\u20b9)",
+        "Expenditure Date",
+        "Payment Status"
+      ],
+      "unique_mps": 699,
+      "unique_constituencies": 530,
+      "unique_states": 35,
+      "unique_vendors": 27871,
+      "total_records": 107551,
+      "exact_duplicate_rows": 32184
+    }
+  }
+}

@@ -1,0 +1,668 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-gov-50: #f0f5fa;
+  --color-gov-100: #e1ecf5;
+  --color-gov-200: #c3d9eb;
+  --color-gov-300: #95bedc;
+  --color-gov-400: #619ecb;
+  --color-gov-500: #3d82b7;
+  --color-gov-600: #2c6799;
+  --color-gov-700: #24537c;
+  --color-gov-800: #1b3a57;
+  --color-gov-850: #142d44;
+  --color-gov-900: #0f2338;
+  --color-gov-950: #0a1726;
+
+  --color-accent-500: #ea580c;
+  --color-accent-600: #c2410c;
+
+  --color-risk-low: #16a34a;
+  --color-risk-medium: #ca8a04;
+  --color-risk-high: #ea580c;
+  --color-risk-critical: #dc2626;
+}
+
+:root {
+  --glass-intensity: 0.85;
+  --glass-blur: 28px;
+  --liquid-glass-opacity-light: 0.65;
+  --liquid-glass-opacity-dark: 0.75;
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0077ed;
+}
+
+@layer base {
+  body {
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", "Inter", sans-serif;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Smooth System-Wide UX Motion & Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Translucent Apple-Style Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.75);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Smooth Interactive Micro-Interactions */
+button, a, input, select {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Print styling for officer inspection report */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+}
+
+/* Eye Blinking Animation for Robot Logo */
+@keyframes botEyeBlink {
+  0%, 86%, 100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  89%, 91% {
+    transform: scaleY(0.08);
+    opacity: 0.2;
+  }
+  93% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  95%, 97% {
+    transform: scaleY(0.08);
+    opacity: 0.2;
+  }
+}
+
+.animate-bot-eye-blink {
+  animation: botEyeBlink 3.8s infinite ease-in-out;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* ==========================================================================
+   BUTTON & BOXED LINK HOVER SHADOW ANIMATION ENGINE
+   ========================================================================== */
+
+/* Universal button, link & card smooth physics transition */
+button:not([disabled]),
+a,
+.interactive-card,
+.stat-card,
+[role="button"] {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              background-color 0.2s ease,
+              color 0.2s ease;
+}
+
+/* Light Mode: Elegant 3D Elevated Ambient Shadow on Hover */
+html.light button:not([disabled]):hover,
+html.light a:hover,
+html.light .interactive-card:hover,
+html.light .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -3px rgba(15, 23, 42, 0.12),
+              0 4px 8px -2px rgba(15, 23, 42, 0.08),
+              0 0 0 1px rgba(15, 23, 42, 0.05);
+}
+
+html.light button:not([disabled]):active,
+html.light a:active,
+html.light .interactive-card:active {
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 4px 8px -2px rgba(15, 23, 42, 0.08);
+}
+
+/* Dark Mode / Glass UI: Luminous Neon Glow & Deep Frosted Shadow on Hover */
+html.dark button:not([disabled]):hover,
+html.dark a:hover,
+html.dark .interactive-card:hover,
+html.dark .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.70),
+              0 0 20px 2px rgba(56, 189, 248, 0.22),
+              0 0 0 1px rgba(56, 189, 248, 0.35);
+}
+
+html.dark button:not([disabled]):active,
+html.dark a:active,
+html.dark .interactive-card:active {
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5),
+              0 0 10px 1px rgba(56, 189, 248, 0.15);
+}
+
+/* ==========================================================================
+   APPLE 2027 "LIQUID GLASS" THEME ENGINE (FLUID LIGHT & DARK MODES)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   LIGHT MODE: APPLE "LIQUID GLASS" OVERLAY ON TINTED CANVAS
+   -------------------------------------------------------------------------- */
+html.light {
+  color-scheme: light;
+}
+
+html.light body,
+html.light .theme-app-shell {
+  background-color: #f0f4f9;
+  background-image: 
+    radial-gradient(at 10% 10%, rgba(186, 230, 253, 0.45) 0px, transparent 55%),
+    radial-gradient(at 90% 12%, rgba(254, 240, 138, 0.28) 0px, transparent 50%),
+    radial-gradient(at 50% 85%, rgba(224, 231, 255, 0.45) 0px, transparent 60%),
+    radial-gradient(at 20% 80%, rgba(199, 210, 254, 0.35) 0px, transparent 55%);
+  background-attachment: fixed;
+  color: #0f172a;
+}
+
+/* Light Mode: Curved Rectangle Boxy Top Menubar */
+html.light .theme-header {
+  background: rgba(255, 255, 255, var(--liquid-glass-opacity-light, 0.80)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  color: #0f172a !important;
+  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), inset 0 1.5px 0 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+html.light .theme-sidebar {
+  background: rgba(255, 255, 255, var(--liquid-glass-opacity-light, 0.78)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.08), inset 0 1.5px 0 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+html.light .theme-viewport {
+  background: rgba(255, 255, 255, calc(var(--liquid-glass-opacity-light, 0.72) * 1.15)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-white {
+  background: rgba(255, 255, 255, var(--liquid-glass-opacity-light, 0.75)) !important;
+  backdrop-filter: blur(calc(var(--glass-blur, 28px) * 0.75)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur, 28px) * 0.75)) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.04), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9) !important;
+  color: #0f172a !important;
+}
+
+/* --------------------------------------------------------------------------
+   DARK MODE: APPLE "LIQUID GLASS" OVERLAY ON DEEP CHARCOAL CANVAS
+   -------------------------------------------------------------------------- */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark .theme-app-shell {
+  background-color: #070a12;
+  background-image: 
+    radial-gradient(at 12% 12%, rgba(14, 165, 233, 0.14) 0px, transparent 50%),
+    radial-gradient(at 88% 15%, rgba(99, 102, 241, 0.15) 0px, transparent 55%),
+    radial-gradient(at 50% 85%, rgba(59, 130, 246, 0.12) 0px, transparent 60%),
+    radial-gradient(at 20% 75%, rgba(168, 85, 247, 0.10) 0px, transparent 55%);
+  background-attachment: fixed;
+  color: #f8fafc;
+}
+
+/* Dark mode scrollbars */
+html.dark ::-webkit-scrollbar-track {
+  background: #080d1a;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Dark Mode: Curved Rectangle Boxy Top Menubar */
+html.dark .theme-header {
+  background: rgba(14, 18, 28, var(--liquid-glass-opacity-dark, 0.82)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.75), inset 0 1.5px 0 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+html.dark .theme-sidebar {
+  background: rgba(16, 20, 32, var(--liquid-glass-opacity-dark, 0.75)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f5f5f7 !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), inset 0 1.5px 0 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Dark Mode: Liquid Glass Main Viewport */
+html.dark .theme-viewport {
+  background: rgba(14, 18, 30, var(--liquid-glass-opacity-dark, 0.75)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), inset 0 1px 1px 0 rgba(255, 255, 255, 0.16) !important;
+  color: #f5f5f7 !important;
+}
+
+/* Dark Mode: Frosted Liquid Glass Cards */
+html.dark .bg-white {
+  background: rgba(22, 28, 44, var(--liquid-glass-opacity-dark, 0.72)) !important;
+  backdrop-filter: blur(calc(var(--glass-blur, 28px) * 0.75)) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur, 28px) * 0.75)) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  box-shadow: 0 10px 28px -5px rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+html.dark .bg-slate-50 {
+  background: rgba(14, 18, 30, 0.70) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .bg-slate-100 {
+  background: rgba(18, 24, 38, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .bg-slate-100\/95 {
+  background: rgba(14, 18, 30, var(--liquid-glass-opacity-dark, 0.75)) !important;
+  backdrop-filter: blur(var(--glass-blur, 28px)) !important;
+}
+
+/* Dark Mode: Crisp Glass Borders & Dividers */
+html.dark .border-slate-200,
+html.dark .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ==========================================================================
+   DARK MODE COMPREHENSIVE LUMINOUS TYPOGRAPHY & VISIBILITY ENGINE
+   ========================================================================== */
+
+/* All primary headings and bold identifiers in Dark Mode */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #ffffff !important;
+}
+
+/* Secondary body and descriptive text in Dark Mode */
+html.dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Government Blue/Navy text in Dark Mode (make electric cyan/sky blue) */
+html.dark .text-blue-950,
+html.dark .text-blue-900,
+html.dark .text-blue-800,
+html.dark .text-blue-700,
+html.dark .text-gov-900,
+html.dark .text-gov-800,
+html.dark .text-gov-700 {
+  color: #38bdf8 !important;
+}
+
+/* Emerald Green text in Dark Mode */
+html.dark .text-emerald-800,
+html.dark .text-emerald-900,
+html.dark .text-emerald-950 {
+  color: #34d399 !important;
+}
+
+/* Amber/Orange text in Dark Mode (e.g. compliance notice, risk badges) */
+html.dark .text-amber-950,
+html.dark .text-amber-900,
+html.dark .text-amber-800 {
+  color: #fef3c7 !important;
+}
+
+html.dark .text-amber-700 {
+  color: #fde68a !important;
+}
+
+/* Purple text in Dark Mode */
+html.dark .text-purple-800,
+html.dark .text-purple-900,
+html.dark .text-purple-950 {
+  color: #c084fc !important;
+}
+
+/* Red text in Dark Mode */
+html.dark .text-red-800,
+html.dark .text-red-900,
+html.dark .text-red-950 {
+  color: #f87171 !important;
+}
+
+/* Icon / Pill backgrounds in Dark Mode (e.g., bg-blue-50, bg-purple-50, bg-amber-50, bg-red-50, bg-gov-100) */
+html.dark .bg-blue-50,
+html.dark .bg-gov-50,
+html.dark .bg-gov-100 {
+  background-color: rgba(14, 165, 233, 0.18) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  color: #38bdf8 !important;
+}
+
+html.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+  border-color: rgba(192, 132, 252, 0.3) !important;
+  color: #c084fc !important;
+}
+
+html.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+  color: #f87171 !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/80,
+html.dark .bg-amber-50\/90 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+html.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.18) !important;
+  border-color: rgba(52, 211, 153, 0.3) !important;
+  color: #34d399 !important;
+}
+
+/* All Table Thead headers across the app in Dark Mode */
+html.dark thead,
+html.dark thead.bg-slate-100 {
+  background-color: #131b2e !important;
+  color: #f1f5f9 !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html.dark thead th {
+  color: #f1f5f9 !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Table rows & hovers across the app in Dark Mode */
+html.dark tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+html.dark tbody tr.hover\:bg-slate-50:hover,
+html.dark tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Inactive tabs and secondary pill buttons in Dark Mode */
+html.dark .bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html.dark .bg-slate-100:hover,
+html.dark .hover\:bg-slate-200:hover,
+html.dark .hover\:bg-slate-100:hover {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
+/* Cards with bg-slate-50 in Dark Mode */
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/60 {
+  background-color: rgba(14, 18, 30, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: #f8fafc !important;
+}
+
+/* Inputs, Selects, and Textareas in Dark Mode */
+html.dark input[type="text"],
+html.dark select,
+html.dark textarea {
+  background-color: rgba(10, 14, 24, 0.85) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html.dark code.bg-slate-200 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #38bdf8 !important;
+}
+
+/* --------------------------------------------------------------------------
+   CRYSTAL-CLEAR TABLE UX & SCOPED CONTRAST ENGINE
+   -------------------------------------------------------------------------- */
+
+/* Solid table card container */
+.table-card {
+  background-color: #0e1424 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.light .table-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Scoped Table Header */
+.app-table-th {
+  background-color: #131b2e !important;
+  color: #f1f5f9 !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html.light .app-table-th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+/* Scoped Table Row */
+.app-table-row {
+  background-color: #0e1424 !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  transition: background-color 0.15s ease;
+}
+
+.app-table-row:hover {
+  background-color: #161e33 !important;
+}
+
+html.light .app-table-row {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+html.light .app-table-row:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Scoped Cell Typography */
+.app-table-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+html.light .app-table-title {
+  color: #0f172a !important;
+}
+
+.app-table-location {
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+html.light .app-table-location {
+  color: #0f172a !important;
+}
+
+.app-table-mp {
+  color: #cbd5e1 !important;
+  font-size: 11px;
+}
+
+html.light .app-table-mp {
+  color: #475569 !important;
+}
+
+.app-table-amount {
+  color: #e2e8f0 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+html.light .app-table-amount {
+  color: #1e293b !important;
+}
+
+.app-table-amount-bold {
+  color: #ffffff !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+html.light .app-table-amount-bold {
+  color: #0f172a !important;
+}
+
+/* High-Contrast Primary Anomaly Badge */
+.anomaly-pill {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fde68a !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  font-weight: 600;
+  font-size: 11px;
+  border-radius: 8px;
+  padding: 4px 10px;
+  display: inline-block;
+  line-height: 1.35;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+html.light .anomaly-pill {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fcd34d !important;
+}
+
+/* Smooth Table Custom Scrollbar */
+.table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.table-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+

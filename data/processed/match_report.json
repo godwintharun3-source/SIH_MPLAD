@@ -1,0 +1,14 @@
+{
+  "matching_timestamp": "2026-08-29T00:25:50.327449",
+  "total_recommended_input": 83797,
+  "total_completed_input": 43667,
+  "exact_work_id_matches": 392,
+  "composite_key_matches": 2589,
+  "unmatched_recommended_requiring_verification": 80816,
+  "completed_supplementary_entries": 42785,
+  "total_master_projects": 126582,
+  "total_expenditure_records": 107551,
+  "expenditures_linked_to_projects": 1345,
+  "expenditures_unlinked_constituency_level": 106206,
+  "matching_duration_seconds": 21.28
+}

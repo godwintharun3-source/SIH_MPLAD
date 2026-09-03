@@ -1,0 +1,30 @@
+{
+  "model_type": "IsolationForest",
+  "version": "1.0.0",
+  "training_timestamp": "2026-08-29T00:26:55.637403",
+  "total_training_records": 126582,
+  "features": [
+    "recommended_amount",
+    "final_amount",
+    "cost_deviation_pct",
+    "category_cost_deviation_pct",
+    "project_duration_days",
+    "has_images_numeric",
+    "match_confidence",
+    "tx_count",
+    "tx_total_amount",
+    "tx_exact_duplicate_count",
+    "tx_repeated_signature_count"
+  ],
+  "parameters": {
+    "n_estimators": 120,
+    "contamination": 0.06,
+    "random_state": 42
+  },
+  "anomalies_detected": 7595,
+  "anomaly_rate_pct": 6.0,
+  "score_min": -0.2482404063609862,
+  "score_max": 0.21208949909845898,
+  "score_mean": 0.13967704211786908,
+  "training_duration_seconds": 6.43
+}

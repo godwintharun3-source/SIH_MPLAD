@@ -1,0 +1,12 @@
+services:
+  # 1. Full-Stack Unified Container Service (Backend API + React Frontend)
+  - type: web
+    name: sih-mplad-ai-system
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8000

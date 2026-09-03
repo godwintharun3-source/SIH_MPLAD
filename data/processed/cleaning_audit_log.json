@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2026-08-29T00:23:41.751744",
+    "step": "CLEAN_MP_SUMMARY",
+    "message": "Loaded raw MP summary",
+    "records_affected": 774
+  },
+  {
+    "timestamp": "2026-08-29T00:23:41.788666",
+    "step": "CLEAN_MP_SUMMARY",
+    "message": "Saved clean MP summary",
+    "records_affected": 774
+  },
+  {
+    "timestamp": "2026-08-29T00:23:42.217455",
+    "step": "CLEAN_RECOMMENDED_WORKS",
+    "message": "Loaded raw recommended works",
+    "records_affected": 83797
+  },
+  {
+    "timestamp": "2026-08-29T00:23:47.177150",
+    "step": "CLEAN_RECOMMENDED_WORKS",
+    "message": "Saved clean recommended works",
+    "records_affected": 83797
+  },
+  {
+    "timestamp": "2026-08-29T00:23:47.805372",
+    "step": "CLEAN_COMPLETED_WORKS",
+    "message": "Loaded raw completed works",
+    "records_affected": 43667
+  },
+  {
+    "timestamp": "2026-08-29T00:24:13.078833",
+    "step": "CLEAN_COMPLETED_WORKS",
+    "message": "Saved clean completed works",
+    "records_affected": 43667
+  },
+  {
+    "timestamp": "2026-08-29T00:24:14.389566",
+    "step": "CLEAN_EXPENDITURES",
+    "message": "Loaded raw expenditures",
+    "records_affected": 107551
+  },
+  {
+    "timestamp": "2026-08-29T00:24:21.487322",
+    "step": "CLEAN_EXPENDITURES",
+    "message": "Identified 38866 exact duplicate rows (retained with flag for anomaly intelligence)",
+    "records_affected": 38866
+  },
+  {
+    "timestamp": "2026-08-29T00:24:24.765752",
+    "step": "CLEAN_EXPENDITURES",
+    "message": "Saved clean expenditures",
+    "records_affected": 107551
+  }
+]
