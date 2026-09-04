@@ -99,12 +99,26 @@ function canvasRoundRect(ctx, x, y, width, height, radius) {
 function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWaving, isSpeaking) {
   fCtx.clearRect(0, 0, 512, 512);
 
+  // 1. Dark Glossy Screen Background (Guarantees face is never blank)
+  fCtx.fillStyle = '#080d16';
+  canvasRoundRect(fCtx, 12, 12, 488, 488, 54);
+  fCtx.fill();
+
+  // Subtle glassy highlight reflection arc across upper screen
+  const specGrad = fCtx.createLinearGradient(20, 20, 480, 220);
+  specGrad.addColorStop(0, 'rgba(255, 255, 255, 0.09)');
+  specGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.02)');
+  specGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  fCtx.fillStyle = specGrad;
+  canvasRoundRect(fCtx, 20, 20, 472, 210, 44);
+  fCtx.fill();
+
   // Cyan Neon Glow styling
   fCtx.shadowColor = '#00f0ff';
-  fCtx.shadowBlur = 18;
+  fCtx.shadowBlur = 22;
   fCtx.fillStyle = '#67f5ff';
   fCtx.strokeStyle = '#67f5ff';
-  fCtx.lineWidth = 9;
+  fCtx.lineWidth = 10;
   fCtx.lineCap = 'round';
   fCtx.lineJoin = 'round';
 
@@ -396,7 +410,7 @@ function assembleProceduralCompanionRobot(scene) {
   });
   visorGeom.center();
   const visorMesh = new THREE.Mesh(visorGeom, darkVisorMat);
-  visorMesh.position.set(0, 0, 0.31);
+  visorMesh.position.set(0, 0, 0.30);
   headGroup.add(visorMesh);
 
   // Interactive Digital Face Canvas Texture (Cyan square eyes + smile)
@@ -407,13 +421,18 @@ function assembleProceduralCompanionRobot(scene) {
   const faceTexture = new THREE.CanvasTexture(faceCanvas);
   faceTexture.colorSpace = THREE.SRGBColorSpace;
 
+  // Render initial face so smiley face is visible immediately upon initialization
+  renderFaceDisplay(fCtx, faceTexture, 0, 0, 0, false, false);
+
   const facePlaneMat = new THREE.MeshBasicMaterial({
     map: faceTexture,
     transparent: true,
+    depthTest: true,
     depthWrite: false,
   });
-  const facePlane = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.48), facePlaneMat);
-  facePlane.position.set(0, 0, 0.355);
+  const facePlane = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.49), facePlaneMat);
+  facePlane.position.set(0, 0, 0.368);
+  facePlane.renderOrder = 20;
   headGroup.add(facePlane);
 
   // Top Light Accent
