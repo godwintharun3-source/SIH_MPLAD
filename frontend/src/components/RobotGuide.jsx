@@ -41,7 +41,7 @@ const TourSpotlight = ({ guideData, isVisible }) => {
   // Reset dismissal whenever route/guideData changes
   useEffect(() => {
     setIsDismissed(false);
-  }, [guideData?.focusElementLabel]);
+  }, [guideData?.focusElementLabel, guideData?.title]);
 
   useEffect(() => {
     if (!isVisible || !guideData || isDismissed) {
@@ -54,21 +54,41 @@ const TourSpotlight = ({ guideData, isVisible }) => {
       if (guideData.focusElementSelector) {
         const selectors = guideData.focusElementSelector.split(',').map(s => s.trim());
         for (const s of selectors) {
-          const found = document.querySelector(s);
-          if (found && found.getBoundingClientRect().height > 0) {
-            el = found;
-            break;
-          }
+          try {
+            const found = document.querySelector(s);
+            if (found && found.getBoundingClientRect().height > 20) {
+              el = found;
+              break;
+            }
+          } catch (e) {}
         }
       }
       // Graceful fallback candidates if primary selector is not found
       if (!el) {
-        el = document.querySelector('.grid, table, .overflow-x-auto, main');
+        const candidates = [
+          '.grid.grid-cols-1',
+          '.table-card',
+          'table',
+          '.overflow-x-auto',
+          'svg.india-map',
+          'main > div > div:nth-child(2)',
+          '.space-y-6 > div:nth-child(2)',
+          '.space-y-6 > div:nth-child(1)'
+        ];
+        for (const c of candidates) {
+          try {
+            const found = document.querySelector(c);
+            if (found && found.getBoundingClientRect().height > 20) {
+              el = found;
+              break;
+            }
+          } catch (e) {}
+        }
       }
 
       if (el) {
         const r = el.getBoundingClientRect();
-        if (r.width > 0 && r.height > 0) {
+        if (r.width > 20 && r.height > 20) {
           setTargetRect({
             top: r.top,
             left: r.left,
@@ -83,13 +103,15 @@ const TourSpotlight = ({ guideData, isVisible }) => {
     };
 
     updateRect();
-    const t = setTimeout(updateRect, 300);
+    const t1 = setTimeout(updateRect, 200);
+    const t2 = setTimeout(updateRect, 600);
 
     window.addEventListener('resize', updateRect);
     window.addEventListener('scroll', updateRect, true);
 
     return () => {
-      clearTimeout(t);
+      clearTimeout(t1);
+      clearTimeout(t2);
       window.removeEventListener('resize', updateRect);
       window.removeEventListener('scroll', updateRect, true);
     };
@@ -98,17 +120,17 @@ const TourSpotlight = ({ guideData, isVisible }) => {
   if (!isVisible || !targetRect || isDismissed) return null;
 
   // Position popup either above or below the highlighted section based on viewport space
-  const showPopupBelow = targetRect.top < 110;
+  const showPopupBelow = targetRect.top < 120;
   const popupTop = showPopupBelow 
-    ? Math.min(window.innerHeight - 120, targetRect.bottom + 14) 
-    : Math.max(16, targetRect.top - 82);
-  const popupLeft = Math.max(16, Math.min(window.innerWidth - 440, targetRect.left + 12));
+    ? Math.min(window.innerHeight - 130, targetRect.bottom + 14) 
+    : Math.max(16, targetRect.top - 88);
+  const popupLeft = Math.max(16, Math.min(window.innerWidth - 460, targetRect.left + 12));
 
   return createPortal(
     <div className="fixed inset-0 pointer-events-none z-40 transition-all duration-300">
       {/* 1. Glowing Pulsing Cyan Target Frame */}
       <div 
-        className="fixed rounded-2xl border-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.45),inset_0_0_15px_rgba(6,182,212,0.15)] pointer-events-none transition-all duration-300 ease-out animate-pulse"
+        className="fixed rounded-2xl border-3 border-cyan-400 shadow-[0_0_35px_5px_rgba(6,182,212,0.65),inset_0_0_20px_rgba(6,182,212,0.2)] pointer-events-none transition-all duration-300 ease-out animate-pulse"
         style={{
           top: `${Math.max(6, targetRect.top - 8)}px`,
           left: `${Math.max(6, targetRect.left - 8)}px`,
@@ -117,59 +139,59 @@ const TourSpotlight = ({ guideData, isVisible }) => {
         }}
       >
         {/* High-Tech Cyber Corner Brackets */}
-        <div className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-300 shadow-sm shadow-cyan-400" />
-        <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 border-t-2 border-r-2 border-cyan-300 shadow-sm shadow-cyan-400" />
-        <div className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 border-b-2 border-l-2 border-cyan-300 shadow-sm shadow-cyan-400" />
-        <div className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 border-b-2 border-r-2 border-cyan-300 shadow-sm shadow-cyan-400" />
+        <div className="absolute -top-2 -left-2 w-5 h-5 border-t-3 border-l-3 border-cyan-200 shadow-md shadow-cyan-400" />
+        <div className="absolute -top-2 -right-2 w-5 h-5 border-t-3 border-r-3 border-cyan-200 shadow-md shadow-cyan-400" />
+        <div className="absolute -bottom-2 -left-2 w-5 h-5 border-b-3 border-l-3 border-cyan-200 shadow-md shadow-cyan-400" />
+        <div className="absolute -bottom-2 -right-2 w-5 h-5 border-b-3 border-r-3 border-cyan-200 shadow-md shadow-cyan-400" />
       </div>
 
       {/* 2. Floating Highlight Explanation Popup */}
       <div 
-        className="fixed pointer-events-auto flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-[#0c1017]/95 border border-cyan-400/80 shadow-2xl shadow-cyan-950/80 text-white backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-[92vw] sm:max-w-lg z-50"
+        className="fixed pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#0c1017]/95 border-2 border-cyan-400 shadow-2xl shadow-cyan-950 text-white backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-[92vw] sm:max-w-xl z-50"
         style={{
           top: `${popupTop}px`,
           left: `${popupLeft}px`,
         }}
       >
-        <div className="p-1.5 rounded-xl bg-slate-900 border border-cyan-500/50 flex items-center justify-center shrink-0 shadow-xs">
-          <RobotEyesIcon className="w-5 h-3" />
+        <div className="p-2 rounded-xl bg-slate-900 border border-cyan-500/60 flex items-center justify-center shrink-0 shadow-sm shadow-cyan-900">
+          <RobotEyesIcon className="w-6 h-3.5" />
         </div>
 
-        <div className="space-y-0.5 text-left min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+        <div className="space-y-1 text-left min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
               Robot Explaining
             </span>
             <span className="text-xs font-black text-white truncate">
               {guideData?.focusElementLabel || 'Current Section'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-300 line-clamp-2 leading-tight">
+          <p className="text-[11px] text-slate-200 line-clamp-2 leading-relaxed font-medium">
             {guideData?.officerFocus || guideData?.summary}
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => {
               if (targetRect?.rawElement) {
                 targetRect.rawElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }
             }}
-            className="px-2.5 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-[10px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-cyan-950 cursor-pointer flex items-center gap-1"
             title="Center this section on screen"
           >
-            <span>Focus</span>
+            <span>Focus 🎯</span>
             <ArrowUpRight className="w-3 h-3" />
           </button>
 
           <button
             onClick={() => setIsDismissed(true)}
-            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Hide Highlight Frame"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -246,7 +268,10 @@ function canvasRoundRect(ctx, x, y, width, height, radius) {
 /**
  * Renders the digital face (cyan square eyes + specular shine + smile) onto the visor canvas
  */
-function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWaving, isSpeaking) {
+/**
+ * Renders the digital face (cyan square eyes + specular shine + smile) onto the visor canvas
+ */
+function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWaving, isSpeaking, isHiding = false) {
   fCtx.clearRect(0, 0, 512, 512);
 
   // 1. Dark Glossy Screen Background (Guarantees face is never blank)
@@ -280,9 +305,9 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
   const currentEyeH = Math.max(3.5, eyeBaseH * (1 - blinkProgress * 0.96));
   const isEyeClosed = blinkProgress > 0.82;
 
-  // Pupil look-at offset (-1 to 1 normalized mouse)
-  const offsetX = lookX * 16;
-  const offsetY = -lookY * 10;
+  // Pupil look-at offset (-1 to 1 normalized mouse, or peeking top-left when hiding)
+  const offsetX = isHiding ? -28 : lookX * 16;
+  const offsetY = isHiding ? -20 : -lookY * 10;
 
   const leftEyeCenterX = 170 + offsetX;
   const rightEyeCenterX = 342 + offsetX;
@@ -348,7 +373,7 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
 
   // Prominent Glowing Beaming Smily Face
   const mouthCenterX = 256 + offsetX * 0.4;
-  const mouthCenterY = 276 + offsetY * 0.4; // Perfectly centered under the eyes matching the image
+  const mouthCenterY = 276 + offsetY * 0.4;
 
   if (isSpeaking) {
     // Joyful talking mouth pulsing with speech
@@ -358,9 +383,9 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
     fCtx.ellipse(mouthCenterX, mouthCenterY + 4, 24, talkHeight, 0, 0, Math.PI * 2);
     fCtx.fill();
   } else {
-    // Beautiful glowing cyan smile curve with rounded tips lifting up
-    const smileW = isWaving ? 44 : 38;
-    const smileDrop = isWaving ? 25 : 21;
+    // Glowing cyan smile curve with rounded tips lifting up
+    const smileW = isHiding ? 30 : isWaving ? 44 : 38;
+    const smileDrop = isHiding ? 17 : isWaving ? 25 : 21;
     fCtx.lineWidth = 11;
     fCtx.strokeStyle = '#67f5ff';
     fCtx.beginPath();
@@ -380,7 +405,7 @@ function assembleProceduralCompanionRobot(scene) {
   const robotRoot = new THREE.Group();
   robotRoot.name = "ProceduralCompanionRobot";
   // Compact chibi robot scale (leaves viewport open, makes ears & hands stand out cute)
-  robotRoot.scale.set(0.76, 0.76, 0.76);
+  robotRoot.scale.set(0.68, 0.68, 0.68);
 
   // --- High-Quality Materials ---
   const whiteCeramicMat = new THREE.MeshStandardMaterial({
@@ -504,35 +529,35 @@ function assembleProceduralCompanionRobot(scene) {
   robotRoot.add(bodyGroup);
 
   // --- 3. Floating Arms & Noticeably Bigger Chubby Hands ---
-  const armGeom = new THREE.CapsuleGeometry(0.125, 0.34, 14, 24);
-  const handPalmGeom = new THREE.SphereGeometry(0.165, 24, 24);
-  handPalmGeom.scale(1.0, 1.16, 0.88);
-  const thumbGeom = new THREE.CapsuleGeometry(0.065, 0.12, 8, 16);
-  const palmSensorGeom = new THREE.CylinderGeometry(0.065, 0.065, 0.018, 20);
+  const armGeom = new THREE.CapsuleGeometry(0.13, 0.32, 14, 24);
+  const handPalmGeom = new THREE.SphereGeometry(0.19, 24, 24);
+  handPalmGeom.scale(1.05, 1.20, 0.90);
+  const thumbGeom = new THREE.CapsuleGeometry(0.075, 0.14, 8, 16);
+  const palmSensorGeom = new THREE.CylinderGeometry(0.075, 0.075, 0.02, 24);
 
   // Left Arm (Relaxed)
   const leftArmGroup = new THREE.Group();
   leftArmGroup.position.set(-0.55, 0.06, 0);
   const leftArmMesh = new THREE.Mesh(armGeom, whiteCeramicMat);
-  leftArmMesh.position.set(0, -0.18, 0);
+  leftArmMesh.position.set(0, -0.16, 0);
   leftArmMesh.rotation.z = -0.12;
   leftArmGroup.add(leftArmMesh);
 
-  // Left Chubby Hand
+  // Left Chubby Hand (Noticeably Big & Cute)
   const leftHandGroup = new THREE.Group();
-  leftHandGroup.position.set(0, -0.38, 0);
+  leftHandGroup.position.set(0, -0.36, 0);
   const leftPalm = new THREE.Mesh(handPalmGeom, whiteCeramicMat);
   leftHandGroup.add(leftPalm);
 
   const leftThumb = new THREE.Mesh(thumbGeom, whiteCeramicMat);
-  leftThumb.position.set(-0.12, 0.04, 0.05);
-  leftThumb.rotation.z = -0.65;
+  leftThumb.position.set(-0.14, 0.04, 0.06);
+  leftThumb.rotation.z = -0.70;
   leftThumb.rotation.x = 0.3;
   leftHandGroup.add(leftThumb);
 
   const leftSensor = new THREE.Mesh(palmSensorGeom, cyanEmissiveMat);
   leftSensor.rotation.x = Math.PI / 2;
-  leftSensor.position.set(0, 0, 0.12);
+  leftSensor.position.set(0, 0, 0.14);
   leftHandGroup.add(leftSensor);
 
   leftArmGroup.add(leftHandGroup);
@@ -542,25 +567,25 @@ function assembleProceduralCompanionRobot(scene) {
   const rightArmGroup = new THREE.Group();
   rightArmGroup.position.set(0.55, 0.06, 0);
   const rightArmMesh = new THREE.Mesh(armGeom, whiteCeramicMat);
-  rightArmMesh.position.set(0, -0.18, 0);
+  rightArmMesh.position.set(0, -0.16, 0);
   rightArmMesh.rotation.z = 0.12;
   rightArmGroup.add(rightArmMesh);
 
-  // Right Chubby Hand
+  // Right Chubby Hand (Noticeably Big & Cute)
   const rightHandGroup = new THREE.Group();
-  rightHandGroup.position.set(0, -0.38, 0);
+  rightHandGroup.position.set(0, -0.36, 0);
   const rightPalm = new THREE.Mesh(handPalmGeom, whiteCeramicMat);
   rightHandGroup.add(rightPalm);
 
   const rightThumb = new THREE.Mesh(thumbGeom, whiteCeramicMat);
-  rightThumb.position.set(0.12, 0.04, 0.05);
-  rightThumb.rotation.z = 0.65;
+  rightThumb.position.set(0.14, 0.04, 0.06);
+  rightThumb.rotation.z = 0.70;
   rightThumb.rotation.x = 0.3;
   rightHandGroup.add(rightThumb);
 
   const rightSensor = new THREE.Mesh(palmSensorGeom, cyanEmissiveMat);
   rightSensor.rotation.x = Math.PI / 2;
-  rightSensor.position.set(0, 0, 0.12);
+  rightSensor.position.set(0, 0, 0.14);
   rightHandGroup.add(rightSensor);
 
   rightArmGroup.add(rightHandGroup);
@@ -616,7 +641,7 @@ function assembleProceduralCompanionRobot(scene) {
   faceTexture.colorSpace = THREE.SRGBColorSpace;
 
   // Render initial face so smiley face is visible immediately upon initialization
-  renderFaceDisplay(fCtx, faceTexture, 0, 0, 0, false, false);
+  renderFaceDisplay(fCtx, faceTexture, 0, 0, 0, false, false, false);
 
   const facePlaneMat = new THREE.MeshBasicMaterial({
     map: faceTexture,
@@ -636,47 +661,47 @@ function assembleProceduralCompanionRobot(scene) {
   topGlowMesh.position.set(0, 0.44, 0.02);
   headGroup.add(topGlowMesh);
 
-  // Noticeably Bigger Antenna Ears (Chibi Proportion)
-  const earGeom = new THREE.CapsuleGeometry(0.115, 0.40, 12, 24);
+  // Extra Large Cute Bunny/Chibi Ears (Noticeably Bigger)
+  const earGeom = new THREE.CapsuleGeometry(0.14, 0.48, 14, 24);
   
   // Left Ear Nub
   const leftEar = new THREE.Mesh(earGeom, whiteCeramicMat);
-  leftEar.position.set(-0.56, 0.38, 0);
-  leftEar.rotation.z = -0.28;
+  leftEar.position.set(-0.54, 0.42, 0);
+  leftEar.rotation.z = -0.30;
   leftEar.rotation.x = -0.05;
   headGroup.add(leftEar);
 
   // Right Ear Nub
   const rightEar = new THREE.Mesh(earGeom, whiteCeramicMat);
-  rightEar.position.set(0.56, 0.38, 0);
-  rightEar.rotation.z = 0.28;
+  rightEar.position.set(0.54, 0.42, 0);
+  rightEar.rotation.z = 0.30;
   rightEar.rotation.x = -0.05;
   headGroup.add(rightEar);
 
-  // Side Earmuffs with Cyan Glow Rings (Noticeably Larger Pods)
-  const earmuffDiscGeom = new THREE.CylinderGeometry(0.165, 0.165, 0.075, 24);
-  const earmuffRingGeom = new THREE.TorusGeometry(0.165, 0.028, 10, 28);
+  // Extra Large Side Earmuffs with Bright Cyan Glow Rings
+  const earmuffDiscGeom = new THREE.CylinderGeometry(0.19, 0.19, 0.08, 28);
+  const earmuffRingGeom = new THREE.TorusGeometry(0.19, 0.034, 10, 28);
 
   // Left Pod
   const leftPodDisc = new THREE.Mesh(earmuffDiscGeom, whiteCeramicMat);
   leftPodDisc.rotation.z = Math.PI / 2;
-  leftPodDisc.position.set(-0.54, 0, 0);
+  leftPodDisc.position.set(-0.55, 0, 0);
   headGroup.add(leftPodDisc);
 
   const leftPodRing = new THREE.Mesh(earmuffRingGeom, cyanEmissiveMat);
   leftPodRing.rotation.y = Math.PI / 2;
-  leftPodRing.position.set(-0.575, 0, 0);
+  leftPodRing.position.set(-0.59, 0, 0);
   headGroup.add(leftPodRing);
 
   // Right Pod
   const rightPodDisc = new THREE.Mesh(earmuffDiscGeom, whiteCeramicMat);
   rightPodDisc.rotation.z = -Math.PI / 2;
-  rightPodDisc.position.set(0.54, 0, 0);
+  rightPodDisc.position.set(0.55, 0, 0);
   headGroup.add(rightPodDisc);
 
   const rightPodRing = new THREE.Mesh(earmuffRingGeom, cyanEmissiveMat);
   rightPodRing.rotation.y = -Math.PI / 2;
-  rightPodRing.position.set(0.575, 0, 0);
+  rightPodRing.position.set(0.59, 0, 0);
   headGroup.add(rightPodRing);
 
   robotRoot.add(headGroup);
@@ -940,7 +965,7 @@ export const RobotGuide = ({
         }
       }
 
-      // Redraw Digital Face Screen (Cyan square eyes, blinking, pupil tracking, smile)
+      // Redraw Digital Face Screen (Cyan square eyes, blinking, pupil tracking, smile, hiding gaze)
       renderFaceDisplay(
         fCtx,
         faceTexture,
@@ -948,7 +973,8 @@ export const RobotGuide = ({
         mouseRef.current.x,
         mouseRef.current.y,
         isCurrentWaving,
-        isCurrentSpeaking
+        isCurrentSpeaking,
+        !isTourActiveRef.current
       );
 
       // -------------------------------------------------------------
@@ -983,16 +1009,16 @@ export const RobotGuide = ({
       // -------------------------------------------------------------
       if (!isTourActiveRef.current) {
         // When tour is off, robot hides behind screen corner with curious sideways tilt
-        const hideTiltZ = -0.34;
-        const hideTiltY = -0.42 + mouseRef.current.x * 0.18; // curious peek inwards
-        const hideTiltX = -0.15;
+        const hideTiltZ = -0.40;
+        const hideTiltY = -0.48 + mouseRef.current.x * 0.18; // curious peek inwards
+        const hideTiltX = -0.16;
         headGroup.rotation.z = THREE.MathUtils.lerp(headGroup.rotation.z, hideTiltZ, 0.08);
         headGroup.rotation.y = THREE.MathUtils.lerp(headGroup.rotation.y, hideTiltY, 0.08);
         headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, hideTiltX, 0.08);
         
         // Right hand rests peeking on imaginary corner edge
-        rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, -1.25, 0.08);
-        rightArmGroup.rotation.y = THREE.MathUtils.lerp(rightArmGroup.rotation.y, 0.55, 0.08);
+        rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, -1.35, 0.08);
+        rightArmGroup.rotation.y = THREE.MathUtils.lerp(rightArmGroup.rotation.y, 0.65, 0.08);
       } else {
         headGroup.rotation.z = THREE.MathUtils.lerp(headGroup.rotation.z, 0, 0.08);
         const targetHeadY = mouseRef.current.x * 0.36;
@@ -1002,26 +1028,26 @@ export const RobotGuide = ({
       }
 
       // -------------------------------------------------------------
-      // WAVING ARM ANIMATION (Right Arm raises high and hand sweeps Right to Left)
+      // WAVING ARM ANIMATION (Right Arm raises high on right side and hand sweeps Right to Left)
       // -------------------------------------------------------------
       if (isCurrentWaving) {
         const waveElapsed = (now - waveStartTimeRef.current) * 0.001;
         // Rhythmically sweep right-to-left
-        const waveSweep = Math.sin(waveElapsed * 8.5); // oscillates between +1 (right) and -1 (left)
+        const waveSweep = Math.sin(waveElapsed * 7.5); // oscillates between -1 (rightmost) and +1 (leftmost)
         
-        // Arm rises up high into the air and swings across
-        const targetWaveZ = -2.55 + waveSweep * 0.38; // high reach with lateral tilt
-        const targetWaveY = 0.28 + waveSweep * 0.46;  // sweeping forward across right-to-left
-        const targetWaveX = -0.32 + Math.cos(waveElapsed * 8.5) * 0.18;
+        // Arm rises up high on the right side and swings across from right to left
+        const targetWaveZ = 2.40 + waveSweep * 0.36; // 2.04 (right) to 2.76 (left)
+        const targetWaveY = -0.22 - waveSweep * 0.38; // sweeps in front across right-to-left
+        const targetWaveX = -0.28 + Math.cos(waveElapsed * 7.5) * 0.14;
 
         rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, targetWaveZ, 0.18);
         rightArmGroup.rotation.x = THREE.MathUtils.lerp(rightArmGroup.rotation.x, targetWaveX, 0.18);
         rightArmGroup.rotation.y = THREE.MathUtils.lerp(rightArmGroup.rotation.y, targetWaveY, 0.18);
 
-        // Hand articulates visibly from right to left
+        // Hand articulates visibly from right to left in sync with arm stroke
         if (rightHandGroup) {
-          rightHandGroup.rotation.z = THREE.MathUtils.lerp(rightHandGroup.rotation.z, waveSweep * 0.55, 0.22);
-          rightHandGroup.rotation.y = THREE.MathUtils.lerp(rightHandGroup.rotation.y, Math.cos(waveElapsed * 8.5) * 0.40, 0.22);
+          rightHandGroup.rotation.z = THREE.MathUtils.lerp(rightHandGroup.rotation.z, -waveSweep * 0.60, 0.22);
+          rightHandGroup.rotation.y = THREE.MathUtils.lerp(rightHandGroup.rotation.y, Math.cos(waveElapsed * 7.5) * 0.35, 0.22);
         }
       } else if (isTourActiveRef.current) {
         // Natural resting pose beside body when tour is active
@@ -1170,7 +1196,7 @@ export const RobotGuide = ({
       {/* 0. Live UI Component Spotlight & Highlight Popup while Explaining */}
       <TourSpotlight 
         guideData={guideData} 
-        isVisible={isTourActive && speechBubbleOpen && !loadingAI} 
+        isVisible={isTourActive && !loadingAI} 
       />
 
       <aside 
@@ -1179,12 +1205,12 @@ export const RobotGuide = ({
         style={{
           transform: !isTourActive
             ? isPeekingHovered 
-              ? 'translateX(65px) translateY(45px) rotate(-8deg)' 
-              : 'translateX(118px) translateY(85px) rotate(-14deg)'
+              ? 'translateX(70px) translateY(55px) rotate(-9deg)' 
+              : 'translateX(135px) translateY(115px) rotate(-18deg)'
             : secretWatchPhase === 'watching'
             ? 'translateX(12px) translateY(5px)'
             : 'translateX(0px) translateY(0px)',
-          transition: 'transform 0.48s cubic-bezier(0.16, 1, 0.3, 1)'
+          transition: 'transform 0.50s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
         onMouseEnter={() => { if (isPeekingOrTourOff) setIsPeekingHovered(true); }}
         onMouseLeave={() => { if (isPeekingOrTourOff) setIsPeekingHovered(false); }}
