@@ -51,7 +51,7 @@ export const RobotEyesIcon = ({ className = "w-7 h-4" }) => (
     <circle cx="34.5" cy="8.5" r="1.2" fill="#ffffff" />
     
     {/* Smiling Curved Mouth */}
-    <path d="M21 17.5 Q24 19.5 27 17.5" stroke="#38bdf8" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+    <path d="M19 16.5 Q24 20.8 29 16.5" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" fill="none" />
   </svg>
 );
 
@@ -108,32 +108,34 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
   fCtx.lineCap = 'round';
   fCtx.lineJoin = 'round';
 
-  const eyeBaseW = 88;
-  const eyeBaseH = 88;
-  const eyeRadius = 24;
+  const eyeBaseW = 96;
+  const eyeBaseH = 96;
+  const eyeRadius = 26;
 
   // Eye Squashing for natural blink
   const currentEyeH = Math.max(3.5, eyeBaseH * (1 - blinkProgress * 0.96));
   const isEyeClosed = blinkProgress > 0.82;
 
   // Pupil look-at offset (-1 to 1 normalized mouse)
-  const offsetX = lookX * 18;
-  const offsetY = -lookY * 12;
+  const offsetX = lookX * 16;
+  const offsetY = -lookY * 10;
 
-  const leftEyeCenterX = 175 + offsetX;
-  const rightEyeCenterX = 337 + offsetX;
-  const eyeCenterY = 215 + offsetY;
+  const leftEyeCenterX = 170 + offsetX;
+  const rightEyeCenterX = 342 + offsetX;
+  const eyeCenterY = 210 + offsetY;
 
   // Left Eye
   if (isWaving) {
-    // Cheerful squinting arch ^
+    // Cheerful smiling squint arch ^
+    fCtx.lineWidth = 10;
     fCtx.beginPath();
-    fCtx.arc(leftEyeCenterX, eyeCenterY + 12, 40, Math.PI * 1.15, Math.PI * 1.85, false);
+    fCtx.arc(leftEyeCenterX, eyeCenterY + 16, 42, Math.PI * 1.15, Math.PI * 1.85, false);
     fCtx.stroke();
   } else if (isEyeClosed) {
+    fCtx.lineWidth = 9;
     fCtx.beginPath();
-    fCtx.moveTo(leftEyeCenterX - 40, eyeCenterY);
-    fCtx.lineTo(leftEyeCenterX + 40, eyeCenterY);
+    fCtx.moveTo(leftEyeCenterX - 42, eyeCenterY);
+    fCtx.lineTo(leftEyeCenterX + 42, eyeCenterY);
     fCtx.stroke();
   } else {
     fCtx.beginPath();
@@ -146,7 +148,7 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
     if (currentEyeH > 35) {
       fCtx.fillStyle = '#ffffff';
       fCtx.beginPath();
-      fCtx.arc(leftEyeCenterX + 16, eyeCenterY - 14, 9, 0, Math.PI * 2);
+      fCtx.arc(leftEyeCenterX + 18, eyeCenterY - 16, 10, 0, Math.PI * 2);
       fCtx.fill();
       fCtx.fillStyle = '#67f5ff';
     }
@@ -154,13 +156,15 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
 
   // Right Eye
   if (isWaving) {
+    fCtx.lineWidth = 10;
     fCtx.beginPath();
-    fCtx.arc(rightEyeCenterX, eyeCenterY + 12, 40, Math.PI * 1.15, Math.PI * 1.85, false);
+    fCtx.arc(rightEyeCenterX, eyeCenterY + 16, 42, Math.PI * 1.15, Math.PI * 1.85, false);
     fCtx.stroke();
   } else if (isEyeClosed) {
+    fCtx.lineWidth = 9;
     fCtx.beginPath();
-    fCtx.moveTo(rightEyeCenterX - 40, eyeCenterY);
-    fCtx.lineTo(rightEyeCenterX + 40, eyeCenterY);
+    fCtx.moveTo(rightEyeCenterX - 42, eyeCenterY);
+    fCtx.lineTo(rightEyeCenterX + 42, eyeCenterY);
     fCtx.stroke();
   } else {
     fCtx.beginPath();
@@ -172,26 +176,32 @@ function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWav
     if (currentEyeH > 35) {
       fCtx.fillStyle = '#ffffff';
       fCtx.beginPath();
-      fCtx.arc(rightEyeCenterX + 16, eyeCenterY - 14, 9, 0, Math.PI * 2);
+      fCtx.arc(rightEyeCenterX + 18, eyeCenterY - 16, 10, 0, Math.PI * 2);
       fCtx.fill();
       fCtx.fillStyle = '#67f5ff';
     }
   }
 
-  // Center Smile
-  fCtx.beginPath();
-  const mouthCenterX = 256 + offsetX * 0.35;
-  const mouthCenterY = 328 + offsetY * 0.35;
+  // Prominent Glowing Beaming Smily Face
+  const mouthCenterX = 256 + offsetX * 0.4;
+  const mouthCenterY = 276 + offsetY * 0.4; // Perfectly centered under the eyes matching the image
 
   if (isSpeaking) {
-    // Talking mouth opening rhythmically
+    // Joyful talking mouth pulsing with speech
     const talkHeight = 9 + Math.abs(Math.sin(performance.now() * 0.016)) * 14;
-    fCtx.ellipse(mouthCenterX, mouthCenterY + 4, 22, talkHeight, 0, 0, Math.PI * 2);
+    fCtx.fillStyle = '#67f5ff';
+    fCtx.beginPath();
+    fCtx.ellipse(mouthCenterX, mouthCenterY + 4, 24, talkHeight, 0, 0, Math.PI * 2);
     fCtx.fill();
   } else {
-    // Cute curved smile matching image
-    fCtx.lineWidth = 8;
-    fCtx.arc(mouthCenterX, mouthCenterY, 34, Math.PI * 0.22, Math.PI * 0.78, false);
+    // Beautiful glowing cyan smile curve with rounded tips lifting up
+    const smileW = isWaving ? 44 : 38;
+    const smileDrop = isWaving ? 25 : 21;
+    fCtx.lineWidth = 11;
+    fCtx.strokeStyle = '#67f5ff';
+    fCtx.beginPath();
+    fCtx.moveTo(mouthCenterX - smileW, mouthCenterY - 4);
+    fCtx.quadraticCurveTo(mouthCenterX, mouthCenterY + smileDrop, mouthCenterX + smileW, mouthCenterY - 4);
     fCtx.stroke();
   }
 
