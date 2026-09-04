@@ -13,6 +13,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/": {
     title: "Executive Overview Dashboard",
     badge: "Step 1 of Tour",
+    focusElementLabel: "National Overview Metrics & Attention Queue",
+    focusElementSelector: ".grid",
     summary: "Welcome! I am your MPLAD AI Humanoid Robot Guide. Here on the National Overview, we track ₹1,16,767 Cr across 774 MPs and 126,582 works with a national utilization rate of 33.9%.",
     officerFocus: "Notice the risk distribution: only 8 projects are in the Critical/High review queue, allowing human inspectors to focus where statistical deviations actually occur.",
     suggestedQuestions: [
@@ -24,6 +26,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/high-risk": {
     title: "Priority Review Queue",
     badge: "Step 2 of Tour",
+    focusElementLabel: "Top Flagged Works & Project #80673",
+    focusElementSelector: "table, .overflow-x-auto",
     summary: "This is the Priority Review Queue. Our explainable risk engine has isolated the top 8 multi-dimensional outliers requiring field verification.",
     officerFocus: "Each project is scored 0–100 with full factor attribution. Look closely at Project #80673 at the top with a Critical 98/100 risk score.",
     suggestedQuestions: [
@@ -35,6 +39,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/project/80673": {
     title: "Flagged Project Diagnostic (#80673)",
     badge: "Step 3 of Tour",
+    focusElementLabel: "Cost Escalation & Explainable Factors",
+    focusElementSelector: ".grid",
     summary: "Here is Project #80673 in Amritsar, Punjab: a Community Hall initially sanctioned for ₹5,00,000 where final certified expenditure escalated by +100.0% to ₹10,00,000.",
     officerFocus: "Review the explainable point breakdown: Cost deviation (+30 pts), Sector outlier (+10 pts), Completion verification (+18 pts), and ML anomaly confirmation (+8 pts).",
     suggestedQuestions: [
@@ -46,6 +52,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/anomalies": {
     title: "Anomaly Intelligence Center",
     badge: "Step 4 of Tour",
+    focusElementLabel: "Multi-Vector Anomaly Channels & Duplicate Signatures",
+    focusElementSelector: "nav, .flex-wrap, table",
     summary: "In the Anomaly Center, you can analyze multi-vector anomalies: cost deviations (>25%), completion verification queues, sector outliers, and duplicate transactions.",
     officerFocus: "Inspect the Duplicate Transaction tab: our signature matching engine flagged 38,866 identical transactions and repeated vendor bursts for audit scrutiny.",
     suggestedQuestions: [
@@ -57,6 +65,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/mps": {
     title: "MP & Constituency Analytics",
     badge: "Step 5 of Tour",
+    focusElementLabel: "MP Implementation Directory & Performance",
+    focusElementSelector: "table, .grid",
     summary: "Here we examine implementation performance across all 774 Members of Parliament and 543+ constituencies across Lok Sabha and Rajya Sabha.",
     officerFocus: "Sort MPs by utilization percentage, completed works, or average risk score to identify implementation bottlenecks by parliamentary territory.",
     suggestedQuestions: [
@@ -68,6 +78,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/states": {
     title: "State & Regional Matrix",
     badge: "Step 6 of Tour",
+    focusElementLabel: "Interactive State Matrix & Geographic Allocation",
+    focusElementSelector: "svg, table",
     summary: "The State Matrix aggregates MPLAD allocations, expenditure, completion rates, and high-risk clusters across all 36 States and Union Territories.",
     officerFocus: "Use the interactive map and regional table to contrast high-spending states with states having pending completion verification backlogs.",
     suggestedQuestions: [
@@ -79,6 +91,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/reports": {
     title: "Officer Inspection Reports",
     badge: "Step 7 of Tour",
+    focusElementLabel: "Official Printable Dossiers & Audit Digests",
+    focusElementSelector: ".grid",
     summary: "The Inspection Dossier engine generates comprehensive, audit-ready PDF dossiers complete with financial timelines, peer benchmarks, and advisory checklists.",
     officerFocus: "Inspectors can export Project #80673's complete audit dossier with one click for formal field verification under MoSPI guidelines.",
     suggestedQuestions: [
@@ -90,6 +104,8 @@ export const PAGE_GUIDE_KNOWLEDGE = {
   "/transparency": {
     title: "Data & Methodology Transparency",
     badge: "Step 8 of Tour",
+    focusElementLabel: "Data Provenance & Mathematical Validation Report",
+    focusElementSelector: ".grid",
     summary: "Transparency is our foundational pillar. This page displays the live transformation audit log and automated validation report matching official MoSPI numbers.",
     officerFocus: "Every metric is validated down to 0.00 rupee discrepancy against official baselines, adhering strictly to non-accusatory legal standards.",
     suggestedQuestions: [
