@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { 
   getGeminiPageGuide, 
   askGeminiRobot, 
@@ -15,7 +14,6 @@ import {
   Send, 
   Sparkles, 
   X, 
-  Eye,
   ArrowUpRight
 } from 'lucide-react';
 
@@ -31,8 +29,8 @@ const TOUR_STEPS = [
 ];
 
 /**
- * Custom 3D Robot Eyes Icon (Double Camera Binocular Lenses)
- * Replaces generic 2D bot logo with the 3D model's actual facial lenses
+ * Custom 3D Companion Robot Eyes Icon (Rounded Visor with Square Cyan Eyes & Smile)
+ * Faithfully represents the 3D procedural companion robot avatar
  */
 export const RobotEyesIcon = ({ className = "w-7 h-4" }) => (
   <svg 
@@ -41,77 +39,442 @@ export const RobotEyesIcon = ({ className = "w-7 h-4" }) => (
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    {/* Orange Binocular Bridge */}
-    <rect x="20" y="10" width="8" height="4" rx="2" fill="#ea580c" />
+    {/* Sleek rounded dark visor */}
+    <rect x="2" y="2" width="44" height="20" rx="7" fill="#0b1322" stroke="#38bdf8" strokeWidth="1.8" />
     
-    {/* Left Eye Housing */}
-    <circle cx="12" cy="12" r="11" fill="#18181b" stroke="#f97316" strokeWidth="2.5" />
-    <circle cx="12" cy="12" r="7" fill="#09090b" stroke="#38bdf8" strokeWidth="1.5" />
+    {/* Left Glowing Cyan Square Eye */}
+    <rect x="11" y="6.5" width="9" height="9" rx="2.2" fill="#38bdf8" />
+    <circle cx="17.5" cy="8.5" r="1.2" fill="#ffffff" />
     
-    {/* Blinking Left Pupil */}
-    <g className="animate-bot-eye-blink">
-      <circle cx="12" cy="12" r="4" fill="#38bdf8" />
-      <circle cx="13.5" cy="10.5" r="1.3" fill="#ffffff" />
-    </g>
+    {/* Right Glowing Cyan Square Eye */}
+    <rect x="28" y="6.5" width="9" height="9" rx="2.2" fill="#38bdf8" />
+    <circle cx="34.5" cy="8.5" r="1.2" fill="#ffffff" />
     
-    {/* Right Eye Housing */}
-    <circle cx="36" cy="12" r="11" fill="#18181b" stroke="#f97316" strokeWidth="2.5" />
-    <circle cx="36" cy="12" r="7" fill="#09090b" stroke="#38bdf8" strokeWidth="1.5" />
-    
-    {/* Blinking Right Pupil */}
-    <g className="animate-bot-eye-blink">
-      <circle cx="36" cy="12" r="4" fill="#38bdf8" />
-      <circle cx="37.5" cy="10.5" r="1.3" fill="#ffffff" />
-    </g>
+    {/* Smiling Curved Mouth */}
+    <path d="M21 17.5 Q24 19.5 27 17.5" stroke="#38bdf8" strokeWidth="1.6" strokeLinecap="round" fill="none" />
   </svg>
 );
 
 /**
- * Poses the fingers for a given arm
- * @param {Object} bones - Map of captured bones
- * @param {boolean} isArm1 - True for right waving arm, false for left arm
- * @param {boolean} isOpen - True for wide open fingers, false for natural relaxed resting pose
- * @param {number} waveFlutter - Gentle dynamic flutter offset during waving
+ * Creates rounded rectangle shape for Three.js geometry extrusions
  */
-const setArmFingers = (bones, isArm1, isOpen, waveFlutter = 0) => {
-  const p = isArm1 ? '1' : '2';
-  const f = bones[`finger${p}`];
-  const fm = bones[`finger${p}_m`];
-  const fe = bones[`finger${p}_end`];
-  const idx = bones[`index${p}`];
-  const idxm = bones[`index${p}_m`];
-  const idxe = bones[`index${p}_end`];
-  const th = bones[`thumb${p}`];
-  const the = bones[`thumb${p}_end`];
+function createRoundRectShape(width, height, radius) {
+  const shape = new THREE.Shape();
+  const x = -width / 2;
+  const y = -height / 2;
+  shape.moveTo(x + radius, y);
+  shape.lineTo(x + width - radius, y);
+  shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+  shape.lineTo(x + width, y + height - radius);
+  shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  shape.lineTo(x + radius, y + height);
+  shape.quadraticCurveTo(x, y + height, x, y + height - radius);
+  shape.lineTo(x, y + radius);
+  shape.quadraticCurveTo(x, y, x + radius, y);
+  return shape;
+}
 
-  const side = isArm1 ? 1 : -1;
-
-  if (isOpen) {
-    // Wide open, extended fingers with natural lateral spread & waving flutter
-    if (idx) idx.rotation.set(-0.02, 0, (-0.14 - waveFlutter) * side);
-    if (idxm) idxm.rotation.set(-0.02, 0, 0);
-    if (idxe) idxe.rotation.set(0, 0, 0);
-
-    if (f) f.rotation.set(-0.02, 0, (0.12 + waveFlutter) * side);
-    if (fm) fm.rotation.set(-0.02, 0, 0);
-    if (fe) fe.rotation.set(0, 0, 0);
-
-    if (th) th.rotation.set(0.18, -0.22 * side, (0.52 + waveFlutter * 0.5) * side);
-    if (the) the.rotation.set(0, 0, 0);
+/**
+ * Canvas round rect helper with graceful fallback
+ */
+function canvasRoundRect(ctx, x, y, width, height, radius) {
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, width, height, radius);
   } else {
-    // Natural relaxed open resting pose (fingers extended & slightly curved, never clenched fists!)
-    if (idx) idx.rotation.set(0.04, 0, -0.06 * side);
-    if (idxm) idxm.rotation.set(0.06, 0, 0);
-    if (idxe) idxe.rotation.set(0, 0, 0);
-
-    if (f) f.rotation.set(0.04, 0, 0.06 * side);
-    if (fm) fm.rotation.set(0.06, 0, 0);
-    if (fe) fe.rotation.set(0, 0, 0);
-
-    if (th) th.rotation.set(0.1, -0.15 * side, 0.35 * side);
-    if (the) the.rotation.set(0, 0, 0);
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
   }
-};
+}
+
+/**
+ * Renders the digital face (cyan square eyes + specular shine + smile) onto the visor canvas
+ */
+function renderFaceDisplay(fCtx, faceTexture, blinkProgress, lookX, lookY, isWaving, isSpeaking) {
+  fCtx.clearRect(0, 0, 512, 512);
+
+  // Cyan Neon Glow styling
+  fCtx.shadowColor = '#00f0ff';
+  fCtx.shadowBlur = 18;
+  fCtx.fillStyle = '#67f5ff';
+  fCtx.strokeStyle = '#67f5ff';
+  fCtx.lineWidth = 9;
+  fCtx.lineCap = 'round';
+  fCtx.lineJoin = 'round';
+
+  const eyeBaseW = 88;
+  const eyeBaseH = 88;
+  const eyeRadius = 24;
+
+  // Eye Squashing for natural blink
+  const currentEyeH = Math.max(3.5, eyeBaseH * (1 - blinkProgress * 0.96));
+  const isEyeClosed = blinkProgress > 0.82;
+
+  // Pupil look-at offset (-1 to 1 normalized mouse)
+  const offsetX = lookX * 18;
+  const offsetY = -lookY * 12;
+
+  const leftEyeCenterX = 175 + offsetX;
+  const rightEyeCenterX = 337 + offsetX;
+  const eyeCenterY = 215 + offsetY;
+
+  // Left Eye
+  if (isWaving) {
+    // Cheerful squinting arch ^
+    fCtx.beginPath();
+    fCtx.arc(leftEyeCenterX, eyeCenterY + 12, 40, Math.PI * 1.15, Math.PI * 1.85, false);
+    fCtx.stroke();
+  } else if (isEyeClosed) {
+    fCtx.beginPath();
+    fCtx.moveTo(leftEyeCenterX - 40, eyeCenterY);
+    fCtx.lineTo(leftEyeCenterX + 40, eyeCenterY);
+    fCtx.stroke();
+  } else {
+    fCtx.beginPath();
+    const rx = leftEyeCenterX - eyeBaseW / 2;
+    const ry = eyeCenterY - currentEyeH / 2;
+    canvasRoundRect(fCtx, rx, ry, eyeBaseW, currentEyeH, Math.min(eyeRadius, currentEyeH / 2));
+    fCtx.fill();
+
+    // Specular highlight white dot in upper-right corner
+    if (currentEyeH > 35) {
+      fCtx.fillStyle = '#ffffff';
+      fCtx.beginPath();
+      fCtx.arc(leftEyeCenterX + 16, eyeCenterY - 14, 9, 0, Math.PI * 2);
+      fCtx.fill();
+      fCtx.fillStyle = '#67f5ff';
+    }
+  }
+
+  // Right Eye
+  if (isWaving) {
+    fCtx.beginPath();
+    fCtx.arc(rightEyeCenterX, eyeCenterY + 12, 40, Math.PI * 1.15, Math.PI * 1.85, false);
+    fCtx.stroke();
+  } else if (isEyeClosed) {
+    fCtx.beginPath();
+    fCtx.moveTo(rightEyeCenterX - 40, eyeCenterY);
+    fCtx.lineTo(rightEyeCenterX + 40, eyeCenterY);
+    fCtx.stroke();
+  } else {
+    fCtx.beginPath();
+    const rx = rightEyeCenterX - eyeBaseW / 2;
+    const ry = eyeCenterY - currentEyeH / 2;
+    canvasRoundRect(fCtx, rx, ry, eyeBaseW, currentEyeH, Math.min(eyeRadius, currentEyeH / 2));
+    fCtx.fill();
+
+    if (currentEyeH > 35) {
+      fCtx.fillStyle = '#ffffff';
+      fCtx.beginPath();
+      fCtx.arc(rightEyeCenterX + 16, eyeCenterY - 14, 9, 0, Math.PI * 2);
+      fCtx.fill();
+      fCtx.fillStyle = '#67f5ff';
+    }
+  }
+
+  // Center Smile
+  fCtx.beginPath();
+  const mouthCenterX = 256 + offsetX * 0.35;
+  const mouthCenterY = 328 + offsetY * 0.35;
+
+  if (isSpeaking) {
+    // Talking mouth opening rhythmically
+    const talkHeight = 9 + Math.abs(Math.sin(performance.now() * 0.016)) * 14;
+    fCtx.ellipse(mouthCenterX, mouthCenterY + 4, 22, talkHeight, 0, 0, Math.PI * 2);
+    fCtx.fill();
+  } else {
+    // Cute curved smile matching image
+    fCtx.lineWidth = 8;
+    fCtx.arc(mouthCenterX, mouthCenterY, 34, Math.PI * 0.22, Math.PI * 0.78, false);
+    fCtx.stroke();
+  }
+
+  faceTexture.needsUpdate = true;
+}
+
+/**
+ * Procedural Companion Robot 3D Assembly
+ * Generates the white ceramic floating robot with blue vest, arc reactor, and glowing visor
+ */
+function assembleProceduralCompanionRobot(scene) {
+  const robotRoot = new THREE.Group();
+  robotRoot.name = "ProceduralCompanionRobot";
+
+  // --- High-Quality Materials ---
+  const whiteCeramicMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.16,
+    metalness: 0.04,
+  });
+
+  const blueVestMat = new THREE.MeshStandardMaterial({
+    color: 0x4aa3eb, // Sky blue vest matching image
+    roughness: 0.28,
+    metalness: 0.06,
+  });
+
+  const collarTrimMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.15,
+  });
+
+  const darkVisorMat = new THREE.MeshPhysicalMaterial({
+    color: 0x090d16,
+    roughness: 0.06,
+    metalness: 0.15,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.06,
+  });
+
+  const darkJointMat = new THREE.MeshStandardMaterial({
+    color: 0x2b3544,
+    roughness: 0.4,
+    metalness: 0.5,
+  });
+
+  const cyanEmissiveMat = new THREE.MeshStandardMaterial({
+    color: 0x67f5ff,
+    emissive: 0x00f0ff,
+    emissiveIntensity: 2.8,
+    roughness: 0.2,
+  });
+
+  const cyanGlowBasicMat = new THREE.MeshBasicMaterial({
+    color: 0x00f0ff,
+    transparent: true,
+    opacity: 0.85,
+  });
+
+  // --- 1. Soft Dynamic Contact Shadow on Floor ---
+  const shadowCanvas = document.createElement('canvas');
+  shadowCanvas.width = 128;
+  shadowCanvas.height = 128;
+  const sCtx = shadowCanvas.getContext('2d');
+  const grad = sCtx.createRadialGradient(64, 64, 0, 64, 64, 60);
+  grad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+  grad.addColorStop(0.3, 'rgba(0, 0, 0, 0.35)');
+  grad.addColorStop(0.65, 'rgba(0, 0, 0, 0.12)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  sCtx.fillStyle = grad;
+  sCtx.fillRect(0, 0, 128, 128);
+
+  const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    map: shadowTex,
+    transparent: true,
+    depthWrite: false,
+  });
+  const shadowMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), shadowMat);
+  shadowMesh.rotation.x = -Math.PI / 2;
+  shadowMesh.position.y = -0.88;
+  scene.add(shadowMesh);
+
+  // --- 2. Floating Body Torso ---
+  const bodyGroup = new THREE.Group();
+  bodyGroup.position.set(0, -0.22, 0);
+
+  // White rounded egg capsule torso
+  const torsoGeom = new THREE.SphereGeometry(0.52, 32, 32);
+  torsoGeom.scale(1.02, 1.20, 0.94);
+  const torsoMesh = new THREE.Mesh(torsoGeom, whiteCeramicMat);
+  bodyGroup.add(torsoMesh);
+
+  // Sky Blue Chest Collar / Vest Plate
+  const vestGeom = new THREE.SphereGeometry(
+    0.535, 32, 24, 
+    Math.PI * 0.28, Math.PI * 0.44, 
+    Math.PI * 0.08, Math.PI * 0.38
+  );
+  const vestMesh = new THREE.Mesh(vestGeom, blueVestMat);
+  bodyGroup.add(vestMesh);
+
+  // White Collar Trim border line
+  const collarTrimGeom = new THREE.TorusGeometry(0.26, 0.015, 8, 28, Math.PI * 0.85);
+  const collarTrimMesh = new THREE.Mesh(collarTrimGeom, collarTrimMat);
+  collarTrimMesh.position.set(0, 0.34, 0.44);
+  collarTrimMesh.rotation.x = 0.35;
+  bodyGroup.add(collarTrimMesh);
+
+  // Chest Arc Reactor (Cyan Core)
+  const coreBezelGeom = new THREE.CylinderGeometry(0.115, 0.115, 0.02, 32);
+  const coreBezelMesh = new THREE.Mesh(coreBezelGeom, whiteCeramicMat);
+  coreBezelMesh.rotation.x = Math.PI / 2 + 0.15;
+  coreBezelMesh.position.set(0, 0.11, 0.48);
+  bodyGroup.add(coreBezelMesh);
+
+  const coreGeom = new THREE.CylinderGeometry(0.09, 0.09, 0.028, 32);
+  const coreMesh = new THREE.Mesh(coreGeom, cyanEmissiveMat);
+  coreMesh.rotation.x = Math.PI / 2 + 0.15;
+  coreMesh.position.set(0, 0.11, 0.49);
+  bodyGroup.add(coreMesh);
+
+  const coreLight = new THREE.PointLight(0x00f0ff, 1.8, 2.0);
+  coreLight.position.set(0, 0.11, 0.65);
+  bodyGroup.add(coreLight);
+
+  // Underside soft cyan glow rim
+  const auraGeom = new THREE.TorusGeometry(0.38, 0.025, 8, 32);
+  const auraMesh = new THREE.Mesh(auraGeom, cyanGlowBasicMat);
+  auraMesh.rotation.x = Math.PI / 2;
+  auraMesh.position.set(0, -0.48, 0);
+  bodyGroup.add(auraMesh);
+
+  robotRoot.add(bodyGroup);
+
+  // --- 3. Floating Arms (Left & Right) ---
+  const armGeom = new THREE.CapsuleGeometry(0.095, 0.36, 12, 24);
+
+  // Left Arm (Relaxed)
+  const leftArmGroup = new THREE.Group();
+  leftArmGroup.position.set(-0.55, 0.06, 0);
+  const leftArmMesh = new THREE.Mesh(armGeom, whiteCeramicMat);
+  leftArmMesh.position.set(0, -0.18, 0);
+  leftArmMesh.rotation.z = -0.12;
+  leftArmGroup.add(leftArmMesh);
+  bodyGroup.add(leftArmGroup);
+
+  // Right Arm (Interactive Waving Arm)
+  const rightArmGroup = new THREE.Group();
+  rightArmGroup.position.set(0.55, 0.06, 0);
+  const rightArmMesh = new THREE.Mesh(armGeom, whiteCeramicMat);
+  rightArmMesh.position.set(0, -0.18, 0);
+  rightArmMesh.rotation.z = 0.12;
+  rightArmGroup.add(rightArmMesh);
+  bodyGroup.add(rightArmGroup);
+
+  // --- 4. Neck Joint ---
+  const neckMesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.15, 0.14, 24),
+    darkJointMat
+  );
+  neckMesh.position.set(0, 0.36, 0);
+  robotRoot.add(neckMesh);
+
+  // --- 5. Head Group ---
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 0.72, 0);
+
+  // Outer White Ceramic Head Shell
+  const headShape = createRoundRectShape(0.96, 0.70, 0.22);
+  const headGeom = new THREE.ExtrudeGeometry(headShape, {
+    depth: 0.50,
+    bevelEnabled: true,
+    bevelSegments: 5,
+    steps: 1,
+    bevelSize: 0.08,
+    bevelThickness: 0.08
+  });
+  headGeom.center();
+  const headMesh = new THREE.Mesh(headGeom, whiteCeramicMat);
+  headGroup.add(headMesh);
+
+  // Curved Black Screen Visor
+  const visorShape = createRoundRectShape(0.76, 0.50, 0.14);
+  const visorGeom = new THREE.ExtrudeGeometry(visorShape, {
+    depth: 0.04,
+    bevelEnabled: true,
+    bevelSegments: 4,
+    steps: 1,
+    bevelSize: 0.03,
+    bevelThickness: 0.03
+  });
+  visorGeom.center();
+  const visorMesh = new THREE.Mesh(visorGeom, darkVisorMat);
+  visorMesh.position.set(0, 0, 0.31);
+  headGroup.add(visorMesh);
+
+  // Interactive Digital Face Canvas Texture (Cyan square eyes + smile)
+  const faceCanvas = document.createElement('canvas');
+  faceCanvas.width = 512;
+  faceCanvas.height = 512;
+  const fCtx = faceCanvas.getContext('2d');
+  const faceTexture = new THREE.CanvasTexture(faceCanvas);
+  faceTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const facePlaneMat = new THREE.MeshBasicMaterial({
+    map: faceTexture,
+    transparent: true,
+    depthWrite: false,
+  });
+  const facePlane = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.48), facePlaneMat);
+  facePlane.position.set(0, 0, 0.355);
+  headGroup.add(facePlane);
+
+  // Top Light Accent
+  const topGlowGeom = new THREE.TorusGeometry(0.24, 0.015, 8, 24, Math.PI * 0.7);
+  const topGlowMesh = new THREE.Mesh(topGlowGeom, cyanEmissiveMat);
+  topGlowMesh.rotation.x = Math.PI / 2;
+  topGlowMesh.position.set(0, 0.44, 0.02);
+  headGroup.add(topGlowMesh);
+
+  // Antenna Ears (Left & Right)
+  const earGeom = new THREE.CapsuleGeometry(0.065, 0.28, 8, 16);
+  
+  // Left Ear Nub
+  const leftEar = new THREE.Mesh(earGeom, whiteCeramicMat);
+  leftEar.position.set(-0.56, 0.28, 0);
+  leftEar.rotation.z = -0.26;
+  leftEar.rotation.x = -0.05;
+  headGroup.add(leftEar);
+
+  // Right Ear Nub
+  const rightEar = new THREE.Mesh(earGeom, whiteCeramicMat);
+  rightEar.position.set(0.56, 0.28, 0);
+  rightEar.rotation.z = 0.26;
+  rightEar.rotation.x = -0.05;
+  headGroup.add(rightEar);
+
+  // Side Earmuffs with Cyan Glow Rings
+  const earmuffDiscGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.05, 24);
+  const earmuffRingGeom = new THREE.TorusGeometry(0.12, 0.02, 8, 24);
+
+  // Left Pod
+  const leftPodDisc = new THREE.Mesh(earmuffDiscGeom, whiteCeramicMat);
+  leftPodDisc.rotation.z = Math.PI / 2;
+  leftPodDisc.position.set(-0.52, 0, 0);
+  headGroup.add(leftPodDisc);
+
+  const leftPodRing = new THREE.Mesh(earmuffRingGeom, cyanEmissiveMat);
+  leftPodRing.rotation.y = Math.PI / 2;
+  leftPodRing.position.set(-0.548, 0, 0);
+  headGroup.add(leftPodRing);
+
+  // Right Pod
+  const rightPodDisc = new THREE.Mesh(earmuffDiscGeom, whiteCeramicMat);
+  rightPodDisc.rotation.z = -Math.PI / 2;
+  rightPodDisc.position.set(0.52, 0, 0);
+  headGroup.add(rightPodDisc);
+
+  const rightPodRing = new THREE.Mesh(earmuffRingGeom, cyanEmissiveMat);
+  rightPodRing.rotation.y = -Math.PI / 2;
+  rightPodRing.position.set(0.548, 0, 0);
+  headGroup.add(rightPodRing);
+
+  robotRoot.add(headGroup);
+  scene.add(robotRoot);
+
+  return {
+    robotRoot,
+    bodyGroup,
+    headGroup,
+    leftArmGroup,
+    rightArmGroup,
+    coreLight,
+    shadowMesh,
+    shadowMat,
+    faceCanvas,
+    fCtx,
+    faceTexture,
+    cyanEmissiveMat,
+    blueVestMat
+  };
+}
 
 export const RobotGuide = ({ 
   isTourActive = true, 
@@ -126,15 +489,16 @@ export const RobotGuide = ({
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
-  const modelRef = useRef(null);
-  const mixerRef = useRef(null);
-  const actionsRef = useRef({});
-  const activeActionRef = useRef(null);
-  const bonesRef = useRef({});
-  const eyesMaterialRef = useRef(null);
-  const eyesMeshRef = useRef(null);
-  const origEyePositionsRef = useRef(null);
-  const eyeLightRef = useRef(null);
+  const companionRobotRef = useRef(null);
+  const reqIdRef = useRef(null);
+
+  // Mouse cursor tracking for head look-at
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const isThinkingRef = useRef(false);
+  const pathnameRef = useRef(location.pathname);
+  const waveStartTimeRef = useRef(0);
+
+  // Lifelike eye blink cycle state
   const blinkStateRef = useRef({
     nextBlinkTime: performance.now() + 1600,
     isBlinking: false,
@@ -143,22 +507,10 @@ export const RobotGuide = ({
     isDoubleBlink: false,
     progress: 0.0
   });
-  const reqIdRef = useRef(null);
-
-  // Mouse cursor tracking for head look-at
-  const mouseRef = useRef({ x: 0, y: 0 });
-  const headRotationRef = useRef({ x: 0, y: 0, z: 0 });
-  const isThinkingRef = useRef(false);
-  const pathnameRef = useRef(location.pathname);
-  const isHoppingRef = useRef(false);
-  const initialPosRef = useRef({ x: 0, y: 0, z: 0 });
 
   // States
-  const [modelLoaded, setModelLoaded] = useState(false);
   const [secretWatchPhase, setSecretWatchPhase] = useState('watching'); // 'watching' | 'saying_hi' | 'active'
-  const [isWalkingAcross, setIsWalkingAcross] = useState(false);
   const [isWaving, setIsWaving] = useState(false);
-  const [walkOffset, setWalkOffset] = useState(0);
   const [speechBubbleOpen, setSpeechBubbleOpen] = useState(false);
   const [audioAllowed, setAudioAllowed] = useState(() => {
     return localStorage.getItem('mplad_voice_allowed') === 'true';
@@ -171,19 +523,16 @@ export const RobotGuide = ({
   const [isAnswering, setIsAnswering] = useState(false);
   const [isPeekingHovered, setIsPeekingHovered] = useState(false);
 
-  // Synchronized refs for Three.js render loop to prevent any re-mounts
+  // Synchronized refs for Three.js render loop
   const isTourActiveRef = useRef(isTourActive);
-  const secretWatchPhaseRef = useRef(secretWatchPhase);
   const isWavingRef = useRef(isWaving);
-  const speechBubbleOpenRef = useRef(speechBubbleOpen);
-  const isWalkingAcrossRef = useRef(isWalkingAcross);
-  const lastPatrolledRouteRef = useRef(location.pathname); // Track route to prevent run on app open
+  const isSpeakingRef = useRef(isSpeaking);
 
   useEffect(() => { isTourActiveRef.current = isTourActive; }, [isTourActive]);
-  useEffect(() => { secretWatchPhaseRef.current = secretWatchPhase; }, [secretWatchPhase]);
   useEffect(() => { isWavingRef.current = isWaving; }, [isWaving]);
-  useEffect(() => { speechBubbleOpenRef.current = speechBubbleOpen; }, [speechBubbleOpen]);
-  useEffect(() => { isWalkingAcrossRef.current = isWalkingAcross; }, [isWalkingAcross]);
+  useEffect(() => { isSpeakingRef.current = isSpeaking; }, [isSpeaking]);
+  useEffect(() => { isThinkingRef.current = loadingAI || isAnswering; }, [loadingAI, isAnswering]);
+  useEffect(() => { pathnameRef.current = location.pathname; }, [location.pathname]);
 
   // Track mouse cursor for realistic head-tracking
   useEffect(() => {
@@ -197,37 +546,7 @@ export const RobotGuide = ({
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Play animation with smooth cross-fade
-  const playAnimation = (name, duration = 0.35) => {
-    const actions = actionsRef.current;
-    if (!actions) return;
-    const targetKey = Object.keys(actions).find(
-      k => k.toLowerCase() === name.toLowerCase()
-    );
-    if (!targetKey || !actions[targetKey]) return;
-
-    const nextAction = actions[targetKey];
-    const prevAction = activeActionRef.current;
-
-    if (prevAction && prevAction !== nextAction) {
-      prevAction.fadeOut(duration);
-      nextAction.reset().fadeIn(duration).play();
-    } else if (!prevAction) {
-      nextAction.reset().play();
-    }
-    activeActionRef.current = nextAction;
-  };
-
-  // Sync animation refs with React state
-  useEffect(() => {
-    isThinkingRef.current = loadingAI || isAnswering;
-  }, [loadingAI, isAnswering]);
-
-  useEffect(() => {
-    pathnameRef.current = location.pathname;
-  }, [location.pathname]);
-
-  // Trigger a lifelike eye blink (single or double blink)
+  // Trigger lifelike eye blink
   const triggerBlink = (isDouble = true) => {
     const blink = blinkStateRef.current;
     if (!blink) return;
@@ -237,20 +556,14 @@ export const RobotGuide = ({
     blink.isDoubleBlink = isDouble;
   };
 
-  // Autonomous wave gesture with extended duration (4.8 seconds) and greeting eye blink
+  // Autonomous waving gesture with greeting eye blink
   const triggerSideToSideWave = () => {
     setIsWaving(true);
+    waveStartTimeRef.current = performance.now();
     triggerBlink(true);
-    playAnimation('IDLE', 0.25);
     setTimeout(() => {
       setIsWaving(false);
-    }, 4800);
-  };
-
-  // Autonomous celebration wave (no jumping, stays planted on ground)
-  const triggerCelebration = () => {
-    isHoppingRef.current = false;
-    triggerSideToSideWave();
+    }, 4200);
   };
 
   // 1. Setup Three.js Scene
@@ -262,14 +575,15 @@ export const RobotGuide = ({
       container.removeChild(container.firstChild);
     }
 
-    const width = container.clientWidth > 0 ? container.clientWidth : 220;
-    const height = container.clientHeight > 0 ? container.clientHeight : 290;
+    const width = container.clientWidth > 0 ? container.clientWidth : 240;
+    const height = container.clientHeight > 0 ? container.clientHeight : 320;
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.25, 3.2);
+    const camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 100);
+    camera.position.set(0, 0.25, 3.4);
+    camera.lookAt(0, 0.10, 0);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({
@@ -288,130 +602,24 @@ export const RobotGuide = ({
     rendererRef.current = renderer;
 
     // Lighting setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.2);
     scene.add(ambientLight);
 
     const keyLight = new THREE.DirectionalLight(0xffffff, 2.6);
     keyLight.position.set(2, 4, 3);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x00f0ff, 2.2);
-    rimLight.position.set(-2, 2, -2);
+    const rimLight = new THREE.DirectionalLight(0x00f0ff, 2.4);
+    rimLight.position.set(-2.5, 2, -2);
     scene.add(rimLight);
 
-    const amberBounce = new THREE.PointLight(0xf59e0b, 1.4, 8);
-    amberBounce.position.set(0, -0.5, 1.5);
-    scene.add(amberBounce);
+    const softFill = new THREE.PointLight(0x38bdf8, 1.2, 8);
+    softFill.position.set(0, -0.6, 1.8);
+    scene.add(softFill);
 
-    const eyeLight = new THREE.PointLight(0x00f0ff, 2.8, 4);
-    eyeLight.position.set(0, 1.45, 0.4);
-    scene.add(eyeLight);
-    eyeLightRef.current = eyeLight;
-
-    // Load Animated Humanoid Robot GLB
-    const loader = new GLTFLoader();
-    loader.load(
-      '/animated_humanoid_robot.glb',
-      (gltf) => {
-        const model = gltf.scene;
-        modelRef.current = model;
-
-        // Auto-center and fit model perfectly in camera view
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-
-        const targetHeight = 1.85;
-        const scale = targetHeight / (size.y || 1);
-        model.scale.set(scale, scale, scale);
-
-        const ox = -center.x * scale;
-        const oy = -box.min.y * scale;
-        const oz = -center.z * scale;
-        initialPosRef.current = { x: ox, y: oy, z: oz };
-        model.position.set(ox, oy, oz);
-
-        const capturedBones = {};
-        model.traverse((child) => {
-          if (child.isMesh && (child.name === 'Cylinder001_1' || child.material?.name === 'EYES' || child.name.includes('Cylinder'))) {
-            if (child.material?.name === 'EYES' || child.name === 'Cylinder001_1' || child.name === 'Cylinder_001_1') {
-              const mat = child.material.clone();
-              mat.color = new THREE.Color(0xffffff);
-              mat.emissive = new THREE.Color(0x00f0ff);
-              mat.emissiveIntensity = 2.2;
-              child.material = mat;
-              eyesMaterialRef.current = mat;
-              eyesMeshRef.current = child;
-
-              if (child.geometry && child.geometry.attributes.position) {
-                origEyePositionsRef.current = new Float32Array(child.geometry.attributes.position.array);
-              }
-            }
-          }
-
-          if (child.isBone || child.name.includes('ROBOT_BONES')) {
-            const n = child.name;
-            if (n.includes('HEAD')) capturedBones.head = child;
-            if (n.includes('NECK')) capturedBones.neck = child;
-            if (n.includes('BODY')) capturedBones.body = child;
-            if (n === 'ARM_ROBOT_BONES') capturedBones.arm = child;
-            if (n === 'FOREARM_ROBOT_BONES') capturedBones.forearm = child;
-            if (n === 'HAND_ROBOT_BONES') capturedBones.hand = child;
-            if (n === 'ARM.001_ROBOT_BONES') capturedBones.arm2 = child;
-            if (n === 'FOREARM.001_ROBOT_BONES') capturedBones.forearm2 = child;
-            if (n === 'HAND.001_ROBOT_BONES') capturedBones.hand2 = child;
-
-            // Arm 1 (Right waving arm) Finger Bones
-            if (n === 'FINGER_ROBOT_BONES') capturedBones.finger1 = child;
-            if (n === 'FINGER_M_ROBOT_BONES') capturedBones.finger1_m = child;
-            if (n === 'FINGER_END_ROBOT_BONES') capturedBones.finger1_end = child;
-            if (n === 'INDEX_ROBOT_BONES') capturedBones.index1 = child;
-            if (n === 'INDEX_M_ROBOT_BONES') capturedBones.index1_m = child;
-            if (n === 'INDEX_END_ROBOT_BONES') capturedBones.index1_end = child;
-            if (n === 'THUMB_ROBOT_BONES') capturedBones.thumb1 = child;
-            if (n === 'THUMB_END_ROBOT_BONES') capturedBones.thumb1_end = child;
-
-            // Arm 2 (Left arm) Finger Bones
-            if (n === 'FINGER.001_ROBOT_BONES') capturedBones.finger2 = child;
-            if (n === 'FINGER_M.001_ROBOT_BONES') capturedBones.finger2_m = child;
-            if (n === 'FINGER_END.001_ROBOT_BONES') capturedBones.finger2_end = child;
-            if (n === 'INDEX.001_ROBOT_BONES') capturedBones.index2 = child;
-            if (n === 'INDEX_M.001_ROBOT_BONES') capturedBones.index2_m = child;
-            if (n === 'INDEX_END.001_ROBOT_BONES') capturedBones.index2_end = child;
-            if (n === 'THUMB.001_ROBOT_BONES') capturedBones.thumb2 = child;
-            if (n === 'THUMB_END.001_ROBOT_BONES') capturedBones.thumb2_end = child;
-          }
-        });
-        bonesRef.current = capturedBones;
-
-        scene.add(model);
-
-        // Animations Setup
-        if (gltf.animations && gltf.animations.length > 0) {
-          const mixer = new THREE.AnimationMixer(model);
-          mixerRef.current = mixer;
-
-          const actions = {};
-          gltf.animations.forEach((clip) => {
-            const clipName = clip.name.toUpperCase();
-            actions[clipName] = mixer.clipAction(clip);
-          });
-          actionsRef.current = actions;
-
-          const idleClip = Object.keys(actions).find(k => k.includes('IDLE')) || Object.keys(actions)[0];
-          if (idleClip && actions[idleClip]) {
-            actions[idleClip].play();
-            activeActionRef.current = actions[idleClip];
-          }
-        }
-
-        setModelLoaded(true);
-      },
-      undefined,
-      (error) => {
-        console.warn('Animated GLB load fallback:', error);
-      }
-    );
+    // Build the 3D Procedural Companion Robot
+    const robot = assembleProceduralCompanionRobot(scene);
+    companionRobotRef.current = robot;
 
     // Responsive Canvas Resizing
     const resizeObserver = new ResizeObserver((entries) => {
@@ -432,14 +640,29 @@ export const RobotGuide = ({
       reqIdRef.current = requestAnimationFrame(animate);
 
       const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
       const now = performance.now();
 
-      if (mixerRef.current) mixerRef.current.update(delta);
+      const r = companionRobotRef.current;
+      if (!r) return;
 
-      const bones = bonesRef.current;
-      const model = modelRef.current;
-      const camera = cameraRef.current;
-      const isThinking = isThinkingRef.current;
+      const {
+        robotRoot,
+        headGroup,
+        bodyGroup,
+        leftArmGroup,
+        rightArmGroup,
+        coreLight,
+        shadowMesh,
+        shadowMat,
+        faceCanvas,
+        fCtx,
+        faceTexture,
+        cyanEmissiveMat
+      } = r;
+
+      const isCurrentWaving = isWavingRef.current;
+      const isCurrentSpeaking = isSpeakingRef.current;
       const currentPath = pathnameRef.current;
       const isAnomalyPage = currentPath.includes('risk') || currentPath.includes('anomal');
 
@@ -462,8 +685,8 @@ export const RobotGuide = ({
             blink.isBlinking = false;
             blink.progress = 0.0;
             blink.nextBlinkTime = now + 2400 + Math.random() * 2200;
-          } else if (tNorm < 0.38) {
-            blink.progress = Math.sin((tNorm / 0.38) * (Math.PI / 2));
+          } else if (tNorm < 0.4) {
+            blink.progress = Math.sin((tNorm / 0.4) * (Math.PI / 2));
           } else if (tNorm < 0.52) {
             blink.progress = 1.0;
           } else {
@@ -471,7 +694,7 @@ export const RobotGuide = ({
             blink.progress = 1.0 - Math.sin(openT * (Math.PI / 2));
           }
         } else {
-          // Double blink sequence (~320ms)
+          // Double blink sequence
           if (elapsed >= 320) {
             blink.isBlinking = false;
             blink.progress = 0.0;
@@ -479,427 +702,179 @@ export const RobotGuide = ({
           } else if (elapsed < 60) {
             blink.progress = elapsed / 60;
           } else if (elapsed < 110) {
-            blink.progress = 1.0 - ((elapsed - 60) / 50) * 0.7; // open to 0.3
+            blink.progress = 1.0 - ((elapsed - 60) / 50) * 0.7;
           } else if (elapsed < 170) {
-            blink.progress = 0.3 + ((elapsed - 110) / 60) * 0.7; // close back to 1.0
+            blink.progress = 0.3 + ((elapsed - 110) / 60) * 0.7;
           } else if (elapsed < 210) {
-            blink.progress = 1.0; // hold shut
+            blink.progress = 1.0;
           } else {
             blink.progress = Math.max(0, 1.0 - (elapsed - 210) / 110);
           }
         }
       }
 
-      // Physical 3D Eye Mesh Vertex Squash (Z is the vertical lens axis in local space)
-      if (eyesMeshRef.current && origEyePositionsRef.current) {
-        const posAttr = eyesMeshRef.current.geometry.attributes.position;
-        const orig = origEyePositionsRef.current;
-        const EYE_CENTER_Z = -1.708;
-        const squashFactor = 1.0 - blink.progress * 0.96;
+      // Redraw Digital Face Screen (Cyan square eyes, blinking, pupil tracking, smile)
+      renderFaceDisplay(
+        fCtx,
+        faceTexture,
+        blink.progress,
+        mouseRef.current.x,
+        mouseRef.current.y,
+        isCurrentWaving,
+        isCurrentSpeaking
+      );
 
-        for (let i = 0; i < 192; i++) {
-          const zIdx = i * 3 + 2;
-          posAttr.array[zIdx] = EYE_CENTER_Z + (orig[zIdx] - EYE_CENTER_Z) * squashFactor;
-        }
-        posAttr.needsUpdate = true;
+      // -------------------------------------------------------------
+      // FLOATING HOVER PHYSICS & BREATHING
+      // -------------------------------------------------------------
+      const hoverY = Math.sin(time * 2.2) * 0.065;
+      const hoverRotZ = Math.cos(time * 1.6) * 0.018;
+      const hoverRotY = Math.sin(time * 1.1) * 0.025;
+
+      robotRoot.position.y = hoverY;
+      robotRoot.rotation.z = hoverRotZ;
+      robotRoot.rotation.y = hoverRotY;
+
+      // Soft Floor Contact Shadow responds to hover height
+      shadowMesh.scale.setScalar(1 - hoverY * 0.8);
+      shadowMat.opacity = Math.max(0.18, 0.46 - hoverY * 0.35);
+
+      // Arc Core Reactor Pulsing
+      coreLight.intensity = 1.8 + Math.sin(time * 3.5) * 0.45;
+      if (isAnomalyPage) {
+        cyanEmissiveMat.color.setHex(0xf97316);
+        cyanEmissiveMat.emissive.setHex(0xea580c);
+        coreLight.color.setHex(0xf97316);
+      } else {
+        cyanEmissiveMat.color.setHex(0x67f5ff);
+        cyanEmissiveMat.emissive.setHex(0x00f0ff);
+        coreLight.color.setHex(0x00f0ff);
       }
 
-      // Dynamic Eye Light & Color with Blink Dimming
-      if (eyeLightRef.current && eyesMaterialRef.current) {
-        if (isAnomalyPage) {
-          eyeLightRef.current.color.setHex(0xf97316);
-          eyesMaterialRef.current.color.setHex(0xf97316);
-          eyesMaterialRef.current.emissive.setHex(0xea580c);
-        } else {
-          eyeLightRef.current.color.setHex(0x00f0ff);
-          eyesMaterialRef.current.color.setHex(0x00e5ff);
-          eyesMaterialRef.current.emissive.setHex(0x00b4d8);
-        }
+      // -------------------------------------------------------------
+      // INTERACTIVE HEAD LOOK-AT CURSOR
+      // -------------------------------------------------------------
+      const targetHeadY = mouseRef.current.x * 0.36;
+      const targetHeadX = -mouseRef.current.y * 0.20;
+      headGroup.rotation.y = THREE.MathUtils.lerp(headGroup.rotation.y, targetHeadY, 0.08);
+      headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, targetHeadX, 0.08);
 
-        const blinkDim = Math.max(0.04, 1.0 - blink.progress * 0.96);
-
-        if (isThinking) {
-          const pulse = 1.5 + Math.sin(now * 0.012) * 1.0;
-          eyeLightRef.current.intensity = pulse * 2.0 * blinkDim;
-          eyesMaterialRef.current.emissiveIntensity = pulse * 1.5 * blinkDim;
-        } else {
-          eyeLightRef.current.intensity = 2.4 * blinkDim;
-          eyesMaterialRef.current.emissiveIntensity = 2.0 * blinkDim;
-        }
+      // -------------------------------------------------------------
+      // WAVING ARM ANIMATION (Right Arm raises and waves "Hi!")
+      // -------------------------------------------------------------
+      if (isCurrentWaving) {
+        const waveElapsed = (now - waveStartTimeRef.current) * 0.001;
+        // Raise arm smoothly and flutter hand back and forth
+        const targetWaveAngle = -2.15 + Math.sin(waveElapsed * 11) * 0.28;
+        rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, targetWaveAngle, 0.15);
+        rightArmGroup.rotation.x = THREE.MathUtils.lerp(rightArmGroup.rotation.x, -0.22, 0.15);
+        rightArmGroup.rotation.y = THREE.MathUtils.lerp(rightArmGroup.rotation.y, 0.32, 0.15);
+      } else {
+        // Natural resting pose beside body
+        rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, 0.12, 0.08);
+        rightArmGroup.rotation.x = THREE.MathUtils.lerp(rightArmGroup.rotation.x, 0.08, 0.08);
+        rightArmGroup.rotation.y = THREE.MathUtils.lerp(rightArmGroup.rotation.y, 0, 0.08);
       }
 
-      if (model && camera) {
-        const t = now * 0.003;
-
-        const isTourActiveVal = isTourActiveRef.current;
-        const secretWatchPhaseVal = secretWatchPhaseRef.current;
-        const isWavingVal = isWavingRef.current;
-        const speechBubbleOpenVal = speechBubbleOpenRef.current;
-        const isWalkingAcrossVal = isWalkingAcrossRef.current;
-
-        const base = initialPosRef.current;
-        model.position.y = base.y;
-        model.position.z = base.z;
-
-        // -------------------------------------------------------------
-        // CASE 1: TOUR OFF OR SECRET WATCHING -> EDGE PEEK & SHAKE
-        // -------------------------------------------------------------
-        if (!isTourActiveVal || secretWatchPhaseVal === 'watching' || secretWatchPhaseVal === 'saying_hi') {
-          camera.position.set(0.1, 1.42, 2.1);
-          camera.lookAt(-0.05, 1.38, 0);
-
-          model.rotation.z = 0.12;
-          model.rotation.y = -0.35 + Math.sin(t * 0.8) * 0.08;
-          model.position.x = base.x + 0.15;
-
-          // Inquisitive head tilt & secret watching scanning motion
-          if (bones.head) {
-            bones.head.rotation.z = -0.3 + Math.sin(t * 1.2) * 0.06;
-            bones.head.rotation.y = 0.25 + Math.sin(t * 1.5) * 0.12;
-            bones.head.rotation.x = 0.1 + Math.sin(t * 1.5) * 0.04;
-          }
-
-          if (secretWatchPhaseVal === 'watching') {
-            // Stealthy secret watching pose: hands tucked beside edge
-            if (bones.arm) bones.arm.rotation.set(-0.5, 0.4, -0.3);
-            if (bones.forearm) bones.forearm.rotation.set(-0.6, 0, 0);
-            setArmFingers(bones, true, false, 0);
-            setArmFingers(bones, false, false, 0);
-          } else {
-            // Upward Hand Wave: Arm Raised High, Hand Shaking Left to Right with OPEN fingers
-            if (bones.arm) {
-              bones.arm.rotation.set(0.14, 0.04, -0.34); // Raised UPWARD beside head
-            }
-            if (bones.forearm) {
-              const waveSwing = Math.sin(t * 3.8) * 0.40;
-              bones.forearm.rotation.set(0.12, 0.04, waveSwing);
-            }
-            if (bones.hand) {
-              const handSwing = Math.sin(t * 3.8 - 0.25) * 0.36;
-              bones.hand.rotation.set(0.08, 0, handSwing);
-            }
-            // FINGERS OPEN & WAVING FLUTTER
-            const flutter = Math.sin(t * 3.8 - 0.5) * 0.08;
-            setArmFingers(bones, true, true, flutter);
-            setArmFingers(bones, false, false, 0);
-          }
-        } 
-        // -------------------------------------------------------------
-        // CASE 2: TOUR ON -> AUTONOMOUS LIFE-LIKE GESTURING, THINKING & SCANNING
-        // -------------------------------------------------------------
-        else {
-          camera.position.set(0, 1.25, 3.2);
-          camera.lookAt(0, 0.9, 0);
-          model.position.x = base.x;
-          model.position.y = base.y;
-          model.position.z = base.z;
-
-          // 1. Thinking / Pondering Pose (chin tap & head tilt while AI is computing)
-          if (isThinking) {
-            if (bones.arm) bones.arm.rotation.set(-1.64, 0.16, -1.64);
-            if (bones.forearm) bones.forearm.rotation.set(1.5, 0, 0);
-            if (bones.hand) bones.hand.rotation.x = Math.sin(t * 8.0) * 0.18; // gentle chin tap
-            if (bones.head) {
-              bones.head.rotation.z = -0.25;
-              bones.head.rotation.x = -0.16 + Math.sin(t * 3.5) * 0.05;
-              bones.head.rotation.y = 0.12;
-            }
-            setArmFingers(bones, true, false, 0);
-            setArmFingers(bones, false, false, 0);
-          }
-          // 2. When raised hand shake is triggered (e.g. on greeting or on click) -> DO HI WITH OPEN FINGERS!
-          else if (isWavingVal) {
-            // Upward Hand Wave: Arm Raised High, Hand Shaking Left to Right
-            if (bones.arm) {
-              bones.arm.rotation.set(0.14, 0.04, -0.34); // Raised UPWARD beside head
-            }
-            if (bones.forearm) {
-              const waveSwing = Math.sin(t * 3.8) * 0.40;
-              bones.forearm.rotation.set(0.12, 0.04, waveSwing);
-            }
-            if (bones.hand) {
-              const handSwing = Math.sin(t * 3.8 - 0.25) * 0.36;
-              bones.hand.rotation.set(0.08, 0, handSwing);
-            }
-            if (bones.head) {
-              bones.head.rotation.z = -0.18 + Math.sin(t * 1.6) * 0.06;
-              bones.head.rotation.y = 0.12 + Math.sin(t * 1.6) * 0.06;
-              bones.head.rotation.x = -0.05 + Math.sin(t * 3.2) * 0.04;
-            }
-            // FINGERS OPEN & WAVING FLUTTER
-            const flutter = Math.sin(t * 3.8 - 0.5) * 0.08;
-            setArmFingers(bones, true, true, flutter);
-            setArmFingers(bones, false, false, 0);
-          }
-          // 3. Conversational / Inspect Gestures while presenting
-          else if (speechBubbleOpenVal && !isWalkingAcrossVal) {
-            // Organic Breathing & Hip weight shift in IDLE
-            if (bones.body) bones.body.position.y = Math.sin(t * 2.2) * 0.02;
-            if (bones.neck) bones.neck.rotation.x = Math.sin(t * 2.2) * 0.02;
-            model.rotation.z = Math.sin(t * 0.9) * 0.015;
-
-            // Scout Inspection Lean on Anomaly Pages
-            if (isAnomalyPage) {
-              model.rotation.x = 0.08; // Leans forward to inspect anomalies
-            } else {
-              model.rotation.x = 0;
-            }
-
-            // Mouse cursor head tracking + Anomaly radar sweep
-            if (bones.head) {
-              const targetYaw = mouseRef.current.x * 0.35;
-              const targetPitch = -mouseRef.current.y * 0.25;
-              headRotationRef.current.y = THREE.MathUtils.lerp(headRotationRef.current.y, targetYaw, 0.08);
-              headRotationRef.current.x = THREE.MathUtils.lerp(headRotationRef.current.x, targetPitch, 0.08);
-
-              const talkNod = Math.sin(t * 3.2) * 0.06;
-              const scanSweep = isAnomalyPage ? Math.sin(t * 2.0) * 0.12 : 0;
-              bones.head.rotation.y = headRotationRef.current.y + scanSweep;
-              bones.head.rotation.x = headRotationRef.current.x + talkNod;
-            }
-
-            // Subtle presentation arm gestures (only when idle, not waving)
-            if (bones.arm && bones.forearm && !isWavingVal && !isThinking) {
-              bones.arm.rotation.z = -0.25 + Math.sin(t * 2.2) * 0.12;
-              bones.forearm.rotation.x = -0.3 + Math.sin(t * 2.8) * 0.15;
-            }
-            if (bones.arm2 && bones.forearm2) {
-              bones.arm2.rotation.z = 0.25 - Math.sin(t * 2.2) * 0.12;
-              bones.forearm2.rotation.x = -0.3 + Math.cos(t * 2.8) * 0.15;
-            }
-            // Natural relaxed open fingers on both hands
-            setArmFingers(bones, true, false, 0);
-            setArmFingers(bones, false, false, 0);
-          } else {
-            // Default idle fingers open and relaxed
-            setArmFingers(bones, true, false, 0);
-            setArmFingers(bones, false, false, 0);
-          }
-        }
-      }
+      // Left Arm gentle breathing sway
+      leftArmGroup.rotation.z = -0.12 + Math.sin(time * 2.2) * 0.03;
 
       renderer.render(scene, camera);
     };
+
     animate();
 
     return () => {
-      if (reqIdRef.current) cancelAnimationFrame(reqIdRef.current);
-      if (rendererRef.current?.domElement && container.contains(rendererRef.current.domElement)) {
-        container.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(reqIdRef.current);
+      resizeObserver.disconnect();
+      if (rendererRef.current && rendererRef.current.domElement) {
+        rendererRef.current.dispose();
       }
-      if (rendererRef.current) rendererRef.current.dispose();
     };
   }, []);
 
-  // 2. Initial "Secret Watch & Say Hi" Entrance Animation on App Open
+  // 2. Secret Watching Experience on Initial App Load
   useEffect(() => {
-    if (!modelLoaded) return;
-
-    // Phase 1: Secretly watching from behind the screen border
-    setSecretWatchPhase('watching');
-    setSpeechBubbleOpen(false);
-
-    // Phase 2: Spots user, leans in, raises hand and says "Hi!" with enthusiastic shake
-    const sayHiTimer = setTimeout(() => {
+    const watchTimer = setTimeout(() => {
       setSecretWatchPhase('saying_hi');
       triggerSideToSideWave();
-    }, 1700);
+      triggerBlink(true);
 
-    // Phase 3: Steps into active dashboard companion mode & opens Gemini overview
-    const activeTimer = setTimeout(() => {
-      setSecretWatchPhase('active');
-      setSpeechBubbleOpen(true);
-    }, 3900);
+      const activeTimer = setTimeout(() => {
+        setSecretWatchPhase('active');
+        setSpeechBubbleOpen(true);
+      }, 2600);
 
-    return () => {
-      clearTimeout(sayHiTimer);
-      clearTimeout(activeTimer);
-    };
-  }, [modelLoaded]);
+      return () => clearTimeout(activeTimer);
+    }, 1800);
 
-  // Periodic spontaneous friendly "Hi!" wave & blink every 22 seconds if idle
-  useEffect(() => {
-    if (!modelLoaded || secretWatchPhase !== 'active') return;
-    const interval = setInterval(() => {
-      if (!isThinkingRef.current && !isWalkingAcrossRef.current && !isWavingRef.current) {
-        triggerSideToSideWave();
-      }
-    }, 22000);
-    return () => clearInterval(interval);
-  }, [modelLoaded, secretWatchPhase]);
+    return () => clearTimeout(watchTimer);
+  }, []);
 
-  // 3. Autonomous Patrol Run: runs across to left corner area and returns running to the same place ONLY on page navigation!
-  useEffect(() => {
-    // Only run when tour is active and initial entrance has finished
-    if (!isTourActive || !modelLoaded || secretWatchPhase !== 'active') return;
-
-    // BUG FIX: Never trigger run on initial app open! Only run when route ACTUALLY changes!
-    if (lastPatrolledRouteRef.current === location.pathname) {
-      return;
-    }
-    lastPatrolledRouteRef.current = location.pathname;
-
-    setIsWalkingAcross(true);
-    setSpeechBubbleOpen(false); // keep center stage clear while running!
-    playAnimation('RUN', 0.2); // Energetic run animation!
-
-    // Run from corner across towards left corner area, then return to home corner!
-    const maxDistance = Math.min(window.innerWidth * 0.55, 680);
-    const startTime = performance.now();
-    const runDuration = 3000; // 3.0s total patrol run across and return
-
-    const runInterval = setInterval(() => {
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(elapsed / runDuration, 1);
-
-      if (progress < 0.48) {
-        // Phase 1: Sprint from home corner across to left corner area
-        const sub = progress / 0.48;
-        const eased = 0.5 - 0.5 * Math.cos(sub * Math.PI); // smooth easeInOut
-        setWalkOffset(-maxDistance * eased);
-        if (modelRef.current) modelRef.current.rotation.y = -Math.PI * 0.48; // face left
-      } else if (progress < 0.52) {
-        // Phase 2: Turn around at left corner
-        const turnSub = (progress - 0.48) / 0.04;
-        if (modelRef.current) {
-          modelRef.current.rotation.y = -Math.PI * 0.48 + turnSub * Math.PI * 0.96;
-        }
-      } else {
-        // Phase 3: Sprint back to the same place (home corner)!
-        const sub = (progress - 0.52) / 0.48;
-        const eased = 0.5 - 0.5 * Math.cos(sub * Math.PI);
-        setWalkOffset(-maxDistance * (1 - eased));
-        if (modelRef.current) modelRef.current.rotation.y = Math.PI * 0.48; // face right
-      }
-
-      if (progress >= 1) {
-        clearInterval(runInterval);
-        setWalkOffset(0); // exactly at the same place in the corner!
-        setIsWalkingAcross(false);
-        if (modelRef.current) {
-          modelRef.current.rotation.y = 0; // Turn facing officer
-        }
-        playAnimation('IDLE', 0.35);
-        setSpeechBubbleOpen(true); // Open speech bubble docked in corner!
-      }
-    }, 16);
-
-    return () => {
-      clearInterval(runInterval);
-      setWalkOffset(0);
-      setIsWalkingAcross(false);
-      if (modelRef.current) modelRef.current.rotation.y = 0;
-      playAnimation('IDLE', 0.2);
-    };
-  }, [location.pathname, isTourActive, modelLoaded, secretWatchPhase]);
-
-  // Helper to speak text aloud
-  const speakExplanation = (text) => {
-    if (!window.speechSynthesis || !text) return;
-
+  // 3. Audio Narration & Speech Synthesis
+  const speakText = (text) => {
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
+
+    if (!audioAllowed) return;
+
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.04;
-    utterance.pitch = 1.0;
+    utterance.rate = 1.02;
+    utterance.pitch = 1.08; // Friendly warm AI tone
 
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.lang.includes('en') && 
-      (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Siri') || v.name.includes('Samantha') || v.name.includes('Daniel'))
+    const naturalVoice = voices.find(v => 
+      v.name.includes('Natural') || 
+      v.name.includes('Samantha') || 
+      v.name.includes('Google US English') ||
+      v.lang.startsWith('en')
     );
-    if (preferredVoice) utterance.voice = preferredVoice;
+    if (naturalVoice) utterance.voice = naturalVoice;
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
 
-    setIsSpeaking(true);
     window.speechSynthesis.speak(utterance);
   };
 
-  // Enable audio permission on user gesture
-  const enableAudioPermission = () => {
-    setAudioAllowed(true);
-    localStorage.setItem('mplad_voice_allowed', 'true');
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      const primer = new SpeechSynthesisUtterance('Voice guide activated');
-      primer.volume = 0.05;
-      window.speechSynthesis.speak(primer);
-    }
-    if (guideData?.explanation) {
-      speakExplanation(guideData.explanation);
-    }
-  };
-
-  // 4. Load Gemini AI explanation & Auto-Speak when audio allowed
-  useEffect(() => {
-    if (!isTourActive) return;
-
-    let isMounted = true;
-    setLoadingAI(true);
-    setChatHistory([]);
-
-    getGeminiPageGuide(location.pathname).then((data) => {
-      if (isMounted) {
-        setGuideData(data);
-        setLoadingAI(false);
-
-        // Auto-speak explanation once robot returns to the corner place!
-        if (audioAllowed && data?.explanation) {
-          setTimeout(() => {
-            if (isMounted) speakExplanation(data.explanation);
-          }, 3100);
-        }
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      window.speechSynthesis?.cancel();
-      setIsSpeaking(false);
-    };
-  }, [location.pathname, isTourActive, audioAllowed]);
-
-  // Audio Narration toggle
   const toggleSpeech = () => {
-    if (!window.speechSynthesis) return;
-
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
-      return;
+    } else if (guideData?.explanation) {
+      speakText(guideData.explanation);
     }
+  };
 
-    if (!audioAllowed) {
-      enableAudioPermission();
-      return;
-    }
-
+  const handleEnableAudio = () => {
+    localStorage.setItem('mplad_voice_allowed', 'true');
+    setAudioAllowed(true);
     if (guideData?.explanation) {
-      speakExplanation(guideData.explanation);
+      speakText(guideData.explanation);
     }
   };
 
-  // Step Navigation
-  const currentTourIndex = TOUR_STEPS.findIndex(s => s.path === location.pathname || (s.path !== '/' && location.pathname.startsWith(s.path)));
-  const prevStep = currentTourIndex > 0 ? TOUR_STEPS[currentTourIndex - 1] : null;
-  const nextStep = currentTourIndex >= 0 && currentTourIndex < TOUR_STEPS.length - 1 ? TOUR_STEPS[currentTourIndex + 1] : TOUR_STEPS[0];
+  // 4. Update Guide Content on Route Change
+  useEffect(() => {
+    const updateGuide = async () => {
+      setLoadingAI(true);
+      const data = await getGeminiPageGuide(location.pathname);
+      setGuideData(data);
+      setLoadingAI(false);
 
-  const goToStep = (path) => {
-    // Automatically grant audio permission on user click
-    if (!audioAllowed) {
-      setAudioAllowed(true);
-      localStorage.setItem('mplad_voice_allowed', 'true');
-    }
-    window.speechSynthesis?.cancel();
-    setIsSpeaking(false);
-    navigate(path);
-  };
+      if (audioAllowed && !isSpeaking && data?.explanation) {
+        speakText(data.explanation);
+      }
+    };
 
-  // Ask Question to Gemini
+    updateGuide();
+    setChatHistory([]);
+  }, [location.pathname]);
+
+  // 5. Ask Gemini Question
   const handleAskQuestion = async (e) => {
-    if (e) e.preventDefault();
+    e?.preventDefault();
     if (!userQuery.trim() || isAnswering) return;
 
     const q = userQuery.trim();
@@ -907,50 +882,57 @@ export const RobotGuide = ({
     setChatHistory(prev => [...prev, { sender: 'user', text: q }]);
     setIsAnswering(true);
 
-    playAnimation('WALK', 0.3);
-
+    triggerBlink(true);
     const answer = await askGeminiRobot(q, location.pathname);
-
     setChatHistory(prev => [...prev, { sender: 'robot', text: answer }]);
     setIsAnswering(false);
-    playAnimation('IDLE', 0.4);
+
+    if (audioAllowed) {
+      speakText(answer);
+    }
+  };
+
+  // Tour Navigation
+  const currentTourIndex = TOUR_STEPS.findIndex(s => s.path === location.pathname);
+  const nextStep = TOUR_STEPS[currentTourIndex + 1];
+  const prevStep = TOUR_STEPS[currentTourIndex - 1];
+
+  const goToStep = (path) => {
+    navigate(path);
+    triggerSideToSideWave();
   };
 
   const isPeekingOrTourOff = !isTourActive || secretWatchPhase === 'watching' || secretWatchPhase === 'saying_hi';
 
   return (
     <aside 
-      aria-label="3D AI Robot Guide" 
-      className={`fixed z-50 select-none flex flex-col lg:flex-row items-end gap-2.5 transition-all duration-500 ease-out ${
-        isPeekingOrTourOff 
-          ? 'bottom-0 right-0 pointer-events-auto' 
-          : 'bottom-4 right-6 pointer-events-none'
-      }`}
+      aria-label="MoSPI AI Companion Guide"
+      className="fixed bottom-3 right-3 z-50 pointer-events-none flex flex-col items-end gap-2.5 transition-all select-none"
       style={{
         transform: isPeekingOrTourOff
           ? secretWatchPhase === 'watching'
-            ? 'translateX(15px) translateY(5px)' // peering curiously from edge
+            ? 'translateX(12px) translateY(5px)'
             : secretWatchPhase === 'saying_hi'
-            ? 'translateX(0px) translateY(0px)' // leaning in to say hi!
+            ? 'translateX(0px) translateY(0px)'
             : isPeekingHovered 
-            ? 'translateX(-10px) translateY(-5px)' 
+            ? 'translateX(-8px) translateY(-5px)' 
             : 'translateX(5px) translateY(5px)'
-          : `translateX(${walkOffset}px)`,
-        transition: isWalkingAcross ? 'none' : 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
+          : 'translateX(0px)',
+        transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
       onMouseEnter={() => { if (isPeekingOrTourOff) setIsPeekingHovered(true); }}
       onMouseLeave={() => { if (isPeekingOrTourOff) setIsPeekingHovered(false); }}
     >
       
-      {/* 1. Speech Bubble / Gemini Explanation Popup (Only shown when active tour) */}
-      {!isPeekingOrTourOff && speechBubbleOpen && !isWalkingAcross && (
+      {/* 1. Speech Bubble / Gemini Explanation Popup */}
+      {!isPeekingOrTourOff && speechBubbleOpen && (
         <div className="pointer-events-auto w-[92vw] sm:w-[360px] rounded-3xl bg-[#0c1017]/95 backdrop-blur-2xl border border-cyan-500/40 shadow-2xl shadow-cyan-950/60 p-4 text-slate-100 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200">
           
-          {/* Top Bar with 3D Robot Eyes Icon (No generic bot logo!) */}
+          {/* Top Bar with 3D Robot Eyes Icon */}
           <div className="flex items-center justify-between pb-2 border-b border-white/10">
             <div className="flex items-center gap-2.5">
               
-              {/* 3D Robot Eyes Icon */}
+              {/* Cute Companion Robot Visor Icon */}
               <div className="p-1.5 rounded-xl bg-slate-900 border border-cyan-500/40 shadow-xs flex items-center justify-center">
                 <RobotEyesIcon className="w-6 h-3.5" />
               </div>
@@ -958,10 +940,10 @@ export const RobotGuide = ({
               <div>
                 <div className="flex items-center gap-1.5">
                   <h4 className="text-xs font-black tracking-wide text-white">
-                    MoSPI Robot Guide
+                    MoSPI AI Companion
                   </h4>
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800">
-                    Gemini 3.6 Flash
+                    Live Guide
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400">
@@ -971,19 +953,17 @@ export const RobotGuide = ({
             </div>
 
             <div className="flex items-center gap-1.5">
-              {/* If Audio Permission not yet granted: display 1-click Enable Voice button! */}
               {!audioAllowed && (
                 <button
-                  onClick={enableAudioPermission}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold border border-cyan-400 shadow-xs animate-pulse transition-all"
-                  title="Grant audio permission so the robot speaks aloud"
+                  onClick={handleEnableAudio}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold transition-all shadow-xs cursor-pointer"
+                  title="Enable Audio Read Aloud"
                 >
                   <Volume2 className="w-3 h-3" />
                   <span>Enable Voice 🔊</span>
                 </button>
               )}
 
-              {/* Speaking Soundwave Indicator */}
               {audioAllowed && isSpeaking && (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 text-[10px] font-mono">
                   <span className="flex items-end gap-0.5 h-2.5">
@@ -995,7 +975,6 @@ export const RobotGuide = ({
                 </div>
               )}
 
-              {/* Narration Audio Mute / Unmute Button */}
               {audioAllowed && (
                 <button
                   onClick={toggleSpeech}
@@ -1010,7 +989,7 @@ export const RobotGuide = ({
                 </button>
               )}
 
-              {/* Wave Hi & Blink Button */}
+              {/* Wave Hi Button */}
               <button
                 onClick={() => {
                   triggerSideToSideWave();
@@ -1022,7 +1001,6 @@ export const RobotGuide = ({
                 <span>👋 Hi!</span>
               </button>
 
-              {/* Close Dialog */}
               <button
                 onClick={() => setSpeechBubbleOpen(false)}
                 className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors"
@@ -1066,7 +1044,7 @@ export const RobotGuide = ({
                 }`}
               >
                 <span className="font-bold block text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
-                  {item.sender === 'user' ? 'You' : 'Robot Guide'}
+                  {item.sender === 'user' ? 'You' : 'Companion Guide'}
                 </span>
                 <p>{item.text}</p>
               </div>
@@ -1101,20 +1079,20 @@ export const RobotGuide = ({
               type="text"
               value={userQuery}
               onChange={(e) => setUserQuery(e.target.value)}
-              placeholder="Ask the Robot Guide anything..."
-              className="w-full bg-slate-900/90 text-slate-200 text-[11px] pl-3 pr-8 py-2 rounded-xl border border-white/15 focus:outline-hidden focus:border-cyan-500 placeholder:text-slate-500"
+              placeholder="Ask me anything about this page..."
+              className="w-full pl-3 pr-8 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-400/60 transition-colors"
             />
             <button
               type="submit"
               disabled={!userQuery.trim() || isAnswering}
-              className="absolute right-1.5 p-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white transition-colors"
+              className="absolute right-1.5 p-1 rounded-lg text-cyan-400 hover:text-cyan-300 disabled:opacity-40 transition-colors"
             >
               <Send className="w-3.5 h-3.5" />
             </button>
           </form>
 
-          {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[11px]">
+          {/* Tour Steps Footer */}
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
             {prevStep ? (
               <button
                 onClick={() => goToStep(prevStep.path)}
@@ -1143,7 +1121,7 @@ export const RobotGuide = ({
         </div>
       )}
 
-      {/* 2. 3D Humanoid Robot Avatar (Permanent, Stable Single Mount!) */}
+      {/* 2. 3D Companion Robot Avatar Container */}
       <div className="pointer-events-auto flex flex-col items-center relative group">
         
         {/* Badge 1: When secretly watching on app open */}
@@ -1205,8 +1183,8 @@ export const RobotGuide = ({
             title="Click robot to wave hi and blink"
           />
 
-          {/* Organic Ground Contact Shadow */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-32 h-4 bg-black/35 rounded-full blur-[4px] pointer-events-none" />
+          {/* Additional soft contact blur */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-3.5 bg-black/25 rounded-full blur-[3px] pointer-events-none" />
         </div>
 
       </div>
