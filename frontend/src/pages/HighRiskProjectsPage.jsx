@@ -15,11 +15,13 @@ import {
   Sparkles
 } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import RiskBadge from '../components/RiskBadge';
 import ProjectCompareModal from '../components/ProjectCompareModal';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
 export const HighRiskProjectsPage = () => {
+  const { selectedHouse, setSelectedHouse, selectedState, setSelectedState } = useAuth();
   const [projects, setProjects] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -28,7 +30,8 @@ export const HighRiskProjectsPage = () => {
   
   // Filters
   const [search, setSearch] = useState('');
-  const [state, setState] = useState('All');
+  const [house, setHouse] = useState(selectedHouse || 'All');
+  const [state, setState] = useState(selectedState !== 'All' ? selectedState : 'All');
   const [category, setCategory] = useState('All');
   const [riskLevel, setRiskLevel] = useState('All');
   const [status, setStatus] = useState('All');
@@ -43,18 +46,29 @@ export const HighRiskProjectsPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Sync with global header state changes
+  useEffect(() => {
+    if (selectedHouse) setHouse(selectedHouse);
+  }, [selectedHouse]);
+
+  useEffect(() => {
+    if (selectedState && selectedState !== 'All') setState(selectedState);
+  }, [selectedState]);
+
   useEffect(() => {
     const initialRisk = searchParams.get('risk');
     const initialState = searchParams.get('state');
+    const initialHouse = searchParams.get('house');
     const initialStatus = searchParams.get('status');
     if (initialRisk) setRiskLevel(initialRisk);
     if (initialState) setState(initialState);
+    if (initialHouse) setHouse(initialHouse);
     if (initialStatus) setStatus(initialStatus);
   }, [searchParams]);
 
   useEffect(() => {
     fetchProjects();
-  }, [page, state, category, riskLevel, status, sortBy, sortDir]);
+  }, [page, house, state, category, riskLevel, status, sortBy, sortDir]);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -62,6 +76,7 @@ export const HighRiskProjectsPage = () => {
       const res = await api.getProjects({
         page,
         page_size: 25,
+        house: house !== 'All' ? house : undefined,
         state: state !== 'All' ? state : undefined,
         category: category !== 'All' ? category : undefined,
         risk_level: riskLevel !== 'All' ? riskLevel : undefined,
@@ -211,6 +226,20 @@ export const HighRiskProjectsPage = () => {
         {/* Dropdown Filters Row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
           
+          {/* Parliamentary House Filter */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">House</label>
+            <select
+              value={house}
+              onChange={(e) => { setHouse(e.target.value); setSelectedHouse(e.target.value); setPage(1); }}
+              className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-[#121829] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs font-medium"
+            >
+              <option value="All">All Houses</option>
+              <option value="Lok Sabha">Lok Sabha (543)</option>
+              <option value="Rajya Sabha">Rajya Sabha (231)</option>
+            </select>
+          </div>
+
           {/* Risk Level Filter */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">Risk Level</label>

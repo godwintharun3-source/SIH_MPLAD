@@ -44,7 +44,13 @@ export const api = {
   getHealth: () => fetchJson('/health'),
 
   // Dashboard
-  getDashboardSummary: () => fetchJson('/dashboard/summary'),
+  getDashboardSummary: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.house && params.house !== 'All') query.append('house', params.house);
+    if (params.state && params.state !== 'All') query.append('state', params.state);
+    const qs = query.toString();
+    return fetchJson(`/dashboard/summary${qs ? `?${qs}` : ''}`);
+  },
   
   // Projects
   getProjects: (params = {}) => {
@@ -57,11 +63,22 @@ export const api = {
     return fetchJson(`/projects?${query.toString()}`);
   },
   
-  getHighRiskProjects: (limit = 50) => fetchJson(`/projects/high-risk?limit=${limit}`),
+  getHighRiskProjects: (limit = 50, params = {}) => {
+    const query = new URLSearchParams({ limit });
+    if (params.house && params.house !== 'All') query.append('house', params.house);
+    if (params.state && params.state !== 'All') query.append('state', params.state);
+    return fetchJson(`/projects/high-risk?${query.toString()}`);
+  },
   getProjectDetail: (projectId) => fetchJson(`/projects/${projectId}`),
   getProjectSimilar: (projectId, limit = 5) => fetchJson(`/projects/${projectId}/similar?limit=${limit}`),
   getProjectTransactions: (projectId) => fetchJson(`/projects/${projectId}/transactions`),
   
+  // Parliamentary Division Analytics
+  getHouseAnalytics: (state = null) => {
+    const query = state && state !== 'All' ? `?state=${encodeURIComponent(state)}` : '';
+    return fetchJson(`/house/analytics${query}`);
+  },
+
   // Anomalies
   getCostAnomalies: (limit = 50) => fetchJson(`/anomalies/cost?limit=${limit}`),
   getCompletionAnomalies: (limit = 50) => fetchJson(`/anomalies/completion?limit=${limit}`),
@@ -70,11 +87,34 @@ export const api = {
   getPaymentAnomalies: (limit = 50) => fetchJson(`/anomalies/payment?limit=${limit}`),
   
   // MPs and Constituencies
-  getMps: (search = '', limit = 100) => fetchJson(`/mps?search=${encodeURIComponent(search)}&limit=${limit}`),
+  getMps: (search = '', limit = 100, params = {}) => {
+    const query = new URLSearchParams({ limit });
+    if (search) query.append('search', search);
+    if (params.house && params.house !== 'All') query.append('house', params.house);
+    if (params.state && params.state !== 'All') query.append('state', params.state);
+    return fetchJson(`/mps?${query.toString()}`);
+  },
   getMpDetail: (mpName) => fetchJson(`/mps/${encodeURIComponent(mpName)}`),
   getConstituencies: (limit = 100) => fetchJson(`/constituencies?limit=${limit}`),
   getStateAnalytics: () => fetchJson('/analytics/states'),
   
+  // Authentication & RBAC
+  getStates: () => fetchJson('/auth/states'),
+  login: (credentials) => fetchJson('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials)
+  }),
+  register: (formData) => fetchJson('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(formData)
+  }),
+  getMe: (token) => fetchJson('/auth/me', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  }),
+  getAdminNotifications: (token) => fetchJson('/auth/notifications', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  }),
+
   // AI Query Assistant
   queryAI: (query, contextProjectId = null) => fetchJson('/ai/query', {
     method: 'POST',

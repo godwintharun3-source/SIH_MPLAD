@@ -39,52 +39,97 @@ def health_check():
     }
 
 @router.get("/dashboard/summary", response_model=DashboardSummary)
-def get_dashboard_summary():
+def get_dashboard_summary(
+    house: Optional[str] = None,
+    state: Optional[str] = None
+):
     global _cached_summary
-    if _cached_summary is not None:
+    is_filtered = (house and house != "All") or (state and state != "All")
+    
+    if not is_filtered and _cached_summary is not None:
         return _cached_summary
         
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # Where clauses for MP summaries
+    mp_where = []
+    mp_params = []
+    if house and house != "All":
+        mp_where.append("house = ?")
+        mp_params.append(house)
+    if state and state != "All":
+        mp_where.append("state = ?")
+        mp_params.append(state)
+    mp_sql = (" WHERE " + " AND ".join(mp_where)) if mp_where else ""
+
+    # Where clauses for Projects
+    p_where = []
+    p_params = []
+    if house and house != "All":
+        p_where.append("house = ?")
+        p_params.append(house)
+    if state and state != "All":
+        p_where.append("state = ?")
+        p_params.append(state)
+    p_sql = (" WHERE " + " AND ".join(p_where)) if p_where else ""
+
+    # Where clauses for Expenditures
+    exp_where = []
+    exp_params = []
+    if house and house != "All":
+        exp_where.append("house = ?")
+        exp_params.append(house)
+    if state and state != "All":
+        exp_where.append("state = ?")
+        exp_params.append(state)
+    exp_sql = (" WHERE " + " AND ".join(exp_where)) if exp_where else ""
+    
     # MP Summary totals
-    mp_tot = cursor.execute("SELECT sum(allocated_amount) as alloc, sum(total_expenditure) as exp, count(*) as mps FROM mp_summaries").fetchone()
+    mp_tot = cursor.execute(f"SELECT sum(allocated_amount) as alloc, sum(total_expenditure) as exp, count(*) as mps FROM mp_summaries{mp_sql}", tuple(mp_params)).fetchone()
     tot_alloc = float(mp_tot["alloc"] or 0.0)
     tot_exp = float(mp_tot["exp"] or 0.0)
     tot_mps = int(mp_tot["mps"] or 0)
     util_pct = round((tot_exp / tot_alloc * 100.0), 4) if tot_alloc > 0 else 0.0
     
     # Project totals
-    p_tot = cursor.execute("SELECT count(*) as total_p, sum(case when completion_status = 'COMPLETED' then 1 else 0 end) as comp_p, sum(case when completion_status = 'COMPLETION_VERIFICATION_REQUIRED' then 1 else 0 end) as unverified_p FROM projects").fetchone()
+    p_tot = cursor.execute(f"SELECT count(*) as total_p, sum(case when completion_status = 'COMPLETED' then 1 else 0 end) as comp_p, sum(case when completion_status = 'COMPLETION_VERIFICATION_REQUIRED' then 1 else 0 end) as unverified_p FROM projects{p_sql}", tuple(p_params)).fetchone()
     tot_proj = int(p_tot["total_p"] or 0)
     comp_proj = int(p_tot["comp_p"] or 0)
     unver_proj = int(p_tot["unverified_p"] or 0)
     comp_rate = round((comp_proj / tot_proj * 100.0), 4) if tot_proj > 0 else 0.0
     
     # Transactions total
-    tot_tx = cursor.execute("SELECT count(*) as cnt FROM expenditures").fetchone()["cnt"]
+    tot_tx = cursor.execute(f"SELECT count(*) as cnt FROM expenditures{exp_sql}", tuple(exp_params)).fetchone()["cnt"]
     
     # Risk Distribution
-    risk_rows = cursor.execute("SELECT risk_level, count(*) as cnt FROM projects GROUP BY risk_level").fetchall()
+    risk_rows = cursor.execute(f"SELECT risk_level, count(*) as cnt FROM projects{p_sql} GROUP BY risk_level", tuple(p_params)).fetchall()
     risk_dist = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
     for r in risk_rows:
-        risk_dist[r["risk_level"]] = int(r["cnt"])
+        if r["risk_level"] in risk_dist:
+            risk_dist[r["risk_level"]] = int(r["cnt"])
         
     # Top States by Expenditure
+    state_cond = p_sql + (" AND " if p_sql else " WHERE ") + "state IS NOT NULL AND state != ''"
     state_rows = cursor.execute(
-        "SELECT state, count(*) as total_projects, sum(recommended_amount) as total_budget, sum(case when completion_status = 'COMPLETED' then 1 else 0 end) as completed_projects, sum(case when risk_level in ('HIGH', 'CRITICAL') then 1 else 0 end) as high_risk_count FROM projects WHERE state IS NOT NULL AND state != '' GROUP BY state ORDER BY total_budget DESC LIMIT 8"
+        f"SELECT state, count(*) as total_projects, sum(recommended_amount) as total_budget, sum(case when completion_status = 'COMPLETED' then 1 else 0 end) as completed_projects, sum(case when risk_level in ('HIGH', 'CRITICAL') then 1 else 0 end) as high_risk_count FROM projects {state_cond} GROUP BY state ORDER BY total_budget DESC LIMIT 8",
+        tuple(p_params)
     ).fetchall()
     top_states = [dict(r) for r in state_rows]
     
     # Top Categories by Budget
+    cat_cond = p_sql + (" AND " if p_sql else " WHERE ") + "category IS NOT NULL AND category != ''"
     cat_rows = cursor.execute(
-        "SELECT coalesce(category, 'Normal/Others') as category, count(*) as project_count, sum(recommended_amount) as total_budget FROM projects WHERE category IS NOT NULL AND category != '' GROUP BY category ORDER BY total_budget DESC LIMIT 6"
+        f"SELECT coalesce(category, 'Normal/Others') as category, count(*) as project_count, sum(recommended_amount) as total_budget FROM projects {cat_cond} GROUP BY category ORDER BY total_budget DESC LIMIT 6",
+        tuple(p_params)
     ).fetchall()
     top_cats = [dict(r) for r in cat_rows]
     
     # Top High Risk Constituencies
+    const_cond = p_sql + (" AND " if p_sql else " WHERE ") + "constituency IS NOT NULL AND constituency != ''"
     const_rows = cursor.execute(
-        "SELECT constituency, state, count(*) as total_projects, sum(case when risk_level in ('HIGH', 'CRITICAL') then 1 else 0 end) as high_risk_count, round(avg(risk_score), 1) as avg_risk_score FROM projects WHERE constituency IS NOT NULL AND constituency != '' GROUP BY constituency, state ORDER BY high_risk_count DESC, avg_risk_score DESC LIMIT 6"
+        f"SELECT constituency, state, count(*) as total_projects, sum(case when risk_level in ('HIGH', 'CRITICAL') then 1 else 0 end) as high_risk_count, round(avg(risk_score), 1) as avg_risk_score FROM projects {const_cond} GROUP BY constituency, state ORDER BY high_risk_count DESC, avg_risk_score DESC LIMIT 6",
+        tuple(p_params)
     ).fetchall()
     top_const = [dict(r) for r in const_rows]
     
@@ -106,7 +151,8 @@ def get_dashboard_summary():
         top_high_risk_constituencies=top_const,
         data_timestamp="2026-08-28"
     )
-    _cached_summary = summary
+    if not is_filtered:
+        _cached_summary = summary
     return summary
 
 def get_category_filter(cat: str):
@@ -145,6 +191,7 @@ def get_category_filter(cat: str):
 def get_projects(
     page: int = 1,
     page_size: int = 20,
+    house: Optional[str] = None,
     state: Optional[str] = None,
     district: Optional[str] = None,
     constituency: Optional[str] = None,
@@ -169,6 +216,9 @@ def get_projects(
     where_clauses = []
     params = []
     
+    if house and house != "All":
+        where_clauses.append("house = ?")
+        params.append(house)
     if state and state != "All":
         where_clauses.append("state = ?")
         params.append(state)
@@ -242,13 +292,28 @@ def get_projects(
     )
 
 @router.get("/projects/high-risk", response_model=List[ProjectSummary])
-def get_high_risk_projects(limit: int = 50):
+def get_high_risk_projects(
+    limit: int = 50,
+    house: Optional[str] = None,
+    state: Optional[str] = None
+):
     conn = get_db_connection()
     cursor = conn.cursor()
-    rows = cursor.execute(
-        "SELECT * FROM projects WHERE risk_level IN ('HIGH', 'CRITICAL') OR risk_score >= 50 ORDER BY risk_score DESC, cost_deviation_pct DESC LIMIT ?",
-        (limit,)
-    ).fetchall()
+    
+    where_clauses = ["(risk_level IN ('HIGH', 'CRITICAL') OR risk_score >= 50)"]
+    params = []
+    
+    if house and house != "All":
+        where_clauses.append("house = ?")
+        params.append(house)
+    if state and state != "All":
+        where_clauses.append("state = ?")
+        params.append(state)
+        
+    sql = f"SELECT * FROM projects WHERE {' AND '.join(where_clauses)} ORDER BY risk_score DESC, cost_deviation_pct DESC LIMIT ?"
+    params.append(limit)
+    
+    rows = cursor.execute(sql, tuple(params)).fetchall()
     conn.close()
     
     return [
@@ -627,22 +692,109 @@ def get_payment_anomalies(limit: int = 50):
     return results
 
 @router.get("/mps")
-def get_mps_list(search: Optional[str] = None, limit: int = 100):
+def get_mps_list(
+    search: Optional[str] = None,
+    house: Optional[str] = None,
+    state: Optional[str] = None,
+    limit: int = 100
+):
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    where_clauses = []
+    params = []
+    
     if search:
         s_pat = f"%{search}%"
-        rows = cursor.execute(
-            "SELECT * FROM mp_summaries WHERE mp_name LIKE ? OR constituency LIKE ? OR state LIKE ? ORDER BY total_expenditure DESC LIMIT ?",
-            (s_pat, s_pat, s_pat, limit)
-        ).fetchall()
-    else:
-        rows = cursor.execute(
-            "SELECT * FROM mp_summaries ORDER BY total_expenditure DESC LIMIT ?",
-            (limit,)
-        ).fetchall()
+        where_clauses.append("(mp_name LIKE ? OR constituency LIKE ? OR state LIKE ?)")
+        params.extend([s_pat, s_pat, s_pat])
+    if house and house != "All":
+        where_clauses.append("house = ?")
+        params.append(house)
+    if state and state != "All":
+        where_clauses.append("state = ?")
+        params.append(state)
+        
+    where_sql = (" WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+    sql = f"SELECT * FROM mp_summaries{where_sql} ORDER BY total_expenditure DESC LIMIT ?"
+    params.append(limit)
+    
+    rows = cursor.execute(sql, tuple(params)).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+@router.get("/house/analytics")
+def get_house_analytics(state: Optional[str] = None):
+    """
+    Returns comparative parliamentary analytics between Lok Sabha and Rajya Sabha,
+    including allocation, expenditure, utilization rate, project volumes, and risk prioritization tiers.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    st_p_clause = " AND state = ?" if (state and state != "All") else ""
+    st_mp_clause = " AND state = ?" if (state and state != "All") else ""
+    p_params = [state] if (state and state != "All") else []
+    mp_params = [state] if (state and state != "All") else []
+
+    houses_data = {}
+    for h in ["Lok Sabha", "Rajya Sabha"]:
+        # MPs
+        mp_row = cursor.execute(
+            f"SELECT count(*) as mp_count, coalesce(sum(allocated_amount), 0.0) as total_alloc, coalesce(sum(total_expenditure), 0.0) as total_exp FROM mp_summaries WHERE house = ?{st_mp_clause}",
+            tuple([h] + mp_params)
+        ).fetchone()
+        
+        # Projects total & status
+        p_row = cursor.execute(
+            f"SELECT count(*) as total_p, coalesce(sum(recommended_amount), 0.0) as total_rec, coalesce(sum(final_amount), 0.0) as total_final, sum(case when completion_status = 'COMPLETED' then 1 else 0 end) as comp_p, sum(case when completion_status = 'COMPLETION_VERIFICATION_REQUIRED' then 1 else 0 end) as unver_p FROM projects WHERE house = ?{st_p_clause}",
+            tuple([h] + p_params)
+        ).fetchone()
+        
+        # Risk distribution
+        r_rows = cursor.execute(
+            f"SELECT risk_level, count(*) as cnt FROM projects WHERE house = ?{st_p_clause} GROUP BY risk_level",
+            tuple([h] + p_params)
+        ).fetchall()
+        r_dist = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+        for r in r_rows:
+            if r["risk_level"] in r_dist:
+                r_dist[r["risk_level"]] = int(r["cnt"])
+                
+        tot_alloc = float(mp_row["total_alloc"] or 0.0)
+        tot_exp = float(mp_row["total_exp"] or 0.0)
+        util_pct = round((tot_exp / tot_alloc * 100.0), 2) if tot_alloc > 0 else 0.0
+        tot_proj = int(p_row["total_p"] or 0)
+        comp_proj = int(p_row["comp_p"] or 0)
+        comp_rate = round((comp_proj / tot_proj * 100.0), 2) if tot_proj > 0 else 0.0
+
+        houses_data[h] = {
+            "house": h,
+            "mp_count": int(mp_row["mp_count"] or 0),
+            "total_allocated": tot_alloc,
+            "total_expenditure": tot_exp,
+            "utilization_percentage": util_pct,
+            "total_projects": tot_proj,
+            "completed_projects": comp_proj,
+            "projects_requiring_verification": int(p_row["unver_p"] or 0),
+            "completion_rate_percentage": comp_rate,
+            "risk_distribution": r_dist,
+            "total_flagged": r_dist["CRITICAL"] + r_dist["HIGH"]
+        }
+
+    conn.close()
+    
+    return {
+        "scoped_state": state or "All India",
+        "lok_sabha": houses_data["Lok Sabha"],
+        "rajya_sabha": houses_data["Rajya Sabha"],
+        "total_mps": houses_data["Lok Sabha"]["mp_count"] + houses_data["Rajya Sabha"]["mp_count"],
+        "total_allocated": houses_data["Lok Sabha"]["total_allocated"] + houses_data["Rajya Sabha"]["total_allocated"],
+        "total_expenditure": houses_data["Lok Sabha"]["total_expenditure"] + houses_data["Rajya Sabha"]["total_expenditure"],
+        "total_projects": houses_data["Lok Sabha"]["total_projects"] + houses_data["Rajya Sabha"]["total_projects"],
+        "total_critical": houses_data["Lok Sabha"]["risk_distribution"]["CRITICAL"] + houses_data["Rajya Sabha"]["risk_distribution"]["CRITICAL"],
+        "total_high": houses_data["Lok Sabha"]["risk_distribution"]["HIGH"] + houses_data["Rajya Sabha"]["risk_distribution"]["HIGH"]
+    }
 
 @router.get("/mps/{mp_name}")
 def get_mp_detail(mp_name: str):

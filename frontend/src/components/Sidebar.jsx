@@ -20,7 +20,8 @@ import {
   Sun,
   Moon,
   Search,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Landmark
 } from 'lucide-react';
 import { RobotEyesIcon } from './RobotGuide';
 import { useTheme } from '../context/ThemeContext';
@@ -36,6 +37,7 @@ export const Sidebar = ({
   const { isDark, toggleTheme, glassIntensity, setGlassIntensity } = useTheme();
 
   const quickAccessItems = [
+    { to: '/portfolio', label: 'Opening Portfolio', icon: Landmark, badge: 'Home', badgeColor: 'bg-blue-950/80 text-blue-300 border-blue-800/80' },
     { to: '/', label: 'Overview Dashboard', icon: Clock, badge: 'Live' },
     { to: '/high-risk', label: 'Priority Review Queue', icon: ShieldAlert, badge: '8 Critical', badgeColor: 'bg-red-950/80 text-red-300 border-red-800/80' },
   ];

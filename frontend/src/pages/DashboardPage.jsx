@@ -18,12 +18,15 @@ import {
   Scale,
   Sliders,
   Filter,
-  Eye
+  Eye,
+  Landmark,
+  MapPin
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/StatCard';
 import RiskBadge from '../components/RiskBadge';
 import IndiaMap from '../components/IndiaMap';
@@ -31,9 +34,11 @@ import ProjectCompareModal from '../components/ProjectCompareModal';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
 export const DashboardPage = () => {
+  const { selectedHouse, setSelectedHouse, selectedState, setSelectedState, userRole, user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [highRiskSample, setHighRiskSample] = useState([]);
   const [statesAnalytics, setStatesAnalytics] = useState([]);
+  const [houseAnalytics, setHouseAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -46,24 +51,26 @@ export const DashboardPage = () => {
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [selectedHouse, selectedState]);
 
   const loadDashboard = async (retryCount = 0) => {
     setLoading(true);
     setError(null);
     try {
-      const [sumData, hrData, stData] = await Promise.all([
-        api.getDashboardSummary(),
-        api.getHighRiskProjects(6),
-        api.getStateAnalytics().catch(() => [])
+      const [sumData, hrData, stData, hAnalytics] = await Promise.all([
+        api.getDashboardSummary({ house: selectedHouse, state: selectedState }),
+        api.getHighRiskProjects(6, { house: selectedHouse, state: selectedState }),
+        api.getStateAnalytics().catch(() => []),
+        api.getHouseAnalytics(selectedState).catch(() => null)
       ]);
       setSummary(sumData);
       setHighRiskSample(hrData);
       setStatesAnalytics(stData);
+      setHouseAnalytics(hAnalytics);
     } catch (err) {
       console.error("Dashboard error:", err);
       if (retryCount < 4) {
-        setError("Waking up Cloud AI Server... (Render free tier wakes up in ~30s). Retrying automatically...");
+        setError("Connecting to Analytics Database... Retrying automatically...");
         setTimeout(() => {
           loadDashboard(retryCount + 1);
         }, 4000);
@@ -170,6 +177,129 @@ export const DashboardPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Parliamentary Division & Risk Prioritization Component */}
+      {houseAnalytics && (
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Landmark className="w-5 h-5 text-blue-400" />
+              <h3 className="text-sm font-bold text-white">Parliamentary House Division: Lok Sabha vs. Rajya Sabha</h3>
+              <span className="text-xs bg-blue-950 text-blue-300 border border-blue-800 px-2 py-0.5 rounded-full font-medium">
+                Scope: {selectedState === 'All' ? 'All India' : selectedState}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Current House Filter:</span>
+              <span className="text-xs font-bold text-amber-400 bg-amber-950/60 border border-amber-800/60 px-2.5 py-1 rounded-lg">
+                {selectedHouse === 'All' ? 'All Houses Combined' : selectedHouse}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Lok Sabha Box */}
+            <div 
+              onClick={() => setSelectedHouse(selectedHouse === 'Lok Sabha' ? 'All' : 'Lok Sabha')}
+              className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                selectedHouse === 'Lok Sabha'
+                  ? 'bg-blue-950/70 border-blue-500 shadow-md'
+                  : 'bg-slate-950 hover:bg-slate-850 border-slate-800'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-white text-sm flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Lok Sabha (House of the People)
+                </span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
+                  {houseAnalytics.lok_sabha.mp_count} MPs
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Allocated</span>
+                  <span className="font-bold text-white">₹{(houseAnalytics.lok_sabha.total_allocated / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 0 })} Cr</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Expended</span>
+                  <span className="font-bold text-white">₹{(houseAnalytics.lok_sabha.total_expenditure / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 0 })} Cr</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Total Works</span>
+                  <span className="font-bold text-white">{houseAnalytics.lok_sabha.total_projects.toLocaleString()}</span>
+                </div>
+              </div>
+              {/* Risk Tiers */}
+              <div className="flex items-center gap-1 text-[10px] pt-2 border-t border-slate-800/80">
+                <span className="text-slate-400 mr-1">Risk Tiers:</span>
+                <span className="px-1.5 py-0.5 rounded bg-red-950 text-red-300 border border-red-800 font-bold">
+                  {houseAnalytics.lok_sabha.risk_distribution.CRITICAL} Critical
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-orange-950 text-orange-300 border border-orange-800 font-bold">
+                  {houseAnalytics.lok_sabha.risk_distribution.HIGH} High
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                  {houseAnalytics.lok_sabha.risk_distribution.MEDIUM} Med
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                  {houseAnalytics.lok_sabha.risk_distribution.LOW} Low
+                </span>
+              </div>
+            </div>
+
+            {/* Rajya Sabha Box */}
+            <div 
+              onClick={() => setSelectedHouse(selectedHouse === 'Rajya Sabha' ? 'All' : 'Rajya Sabha')}
+              className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                selectedHouse === 'Rajya Sabha'
+                  ? 'bg-purple-950/70 border-purple-500 shadow-md'
+                  : 'bg-slate-950 hover:bg-slate-850 border-slate-800'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-white text-sm flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  Rajya Sabha (Council of States)
+                </span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                  {houseAnalytics.rajya_sabha.mp_count} MPs
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Allocated</span>
+                  <span className="font-bold text-white">₹{(houseAnalytics.rajya_sabha.total_allocated / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 0 })} Cr</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Expended</span>
+                  <span className="font-bold text-white">₹{(houseAnalytics.rajya_sabha.total_expenditure / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 0 })} Cr</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Total Works</span>
+                  <span className="font-bold text-white">{houseAnalytics.rajya_sabha.total_projects.toLocaleString()}</span>
+                </div>
+              </div>
+              {/* Risk Tiers */}
+              <div className="flex items-center gap-1 text-[10px] pt-2 border-t border-slate-800/80">
+                <span className="text-slate-400 mr-1">Risk Tiers:</span>
+                <span className="px-1.5 py-0.5 rounded bg-red-950 text-red-300 border border-red-800 font-bold">
+                  {houseAnalytics.rajya_sabha.risk_distribution.CRITICAL} Critical
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-orange-950 text-orange-300 border border-orange-800 font-bold">
+                  {houseAnalytics.rajya_sabha.risk_distribution.HIGH} High
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                  {houseAnalytics.rajya_sabha.risk_distribution.MEDIUM} Med
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                  {houseAnalytics.rajya_sabha.risk_distribution.LOW} Low
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2. Structured Attention-First Metric Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

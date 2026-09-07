@@ -7,13 +7,15 @@ import os
 import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 from backend.app.api.endpoints import router as api_router
+from backend.app.api.auth import router as auth_router, init_users_table
 
 app = FastAPI(
     title="MPLAD AI Risk & Anomaly Intelligence System",
@@ -32,10 +34,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+@app.on_event("startup")
+def on_startup():
+    init_users_table()
 
 app.include_router(api_router)
+app.include_router(auth_router)
 
 DIST_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/dist"))
 

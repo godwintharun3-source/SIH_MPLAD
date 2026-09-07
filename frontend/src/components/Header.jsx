@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   ShieldAlert, 
   Search, 
@@ -9,11 +10,30 @@ import {
   Compass,
   Sun,
   Moon,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Landmark,
+  MapPin,
+  User,
+  LogOut,
+  LogIn,
+  Layers
 } from 'lucide-react';
 import { api } from '../services/api';
 import { RobotEyesIcon } from './RobotGuide';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+
+const INDIAN_STATES = [
+  "All India",
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman And Nicobar Islands",
+  "Chandigarh", "Dadra And Nagar Haveli", "Delhi", "Jammu And Kashmir",
+  "Ladakh", "Lakshadweep", "Puducherry"
+];
 
 export const Header = ({ 
   onOpenAI, 
@@ -25,7 +45,18 @@ export const Header = ({
   robotGuideOpen,
   onToggleRobotGuide 
 }) => {
+  const navigate = useNavigate();
   const { theme, toggleTheme, isDark, glassIntensity, setGlassIntensity } = useTheme();
+  const { 
+    user, 
+    userRole, 
+    selectedHouse, 
+    setSelectedHouse, 
+    selectedState, 
+    setSelectedState, 
+    logout, 
+    isAuthenticated 
+  } = useAuth();
   const [pipelineHealthy, setPipelineHealthy] = useState(null);
 
   useEffect(() => {
@@ -68,18 +99,44 @@ export const Header = ({
             Dataset Release: <strong className={`${isDark ? 'text-slate-200' : 'text-slate-900'} font-mono`}>2026-08-28</strong>
           </span>
           <span className={isDark ? 'text-slate-600 hidden md:inline' : 'text-slate-300 hidden md:inline'}>|</span>
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Pipeline Status:</span>
-            {pipelineHealthy === true ? (
-              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Healthy
-              </span>
-            ) : pipelineHealthy === false ? (
-              <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Offline
-              </span>
+          
+          {/* User Auth & Portfolio Quick Links */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/portfolio"
+              className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 cursor-pointer"
+            >
+              <Landmark className="w-3 h-3" />
+              <span>Opening Portfolio</span>
+            </Link>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-1.5">
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  userRole === 'admin' 
+                    ? 'bg-amber-950 text-amber-300 border border-amber-800' 
+                    : userRole === 'employee'
+                    ? 'bg-blue-950 text-blue-300 border border-blue-800'
+                    : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                }`}>
+                  {userRole === 'admin' ? '👑 Admin' : userRole === 'employee' ? '🏛️ Employee' : `👤 Citizen (${user?.state || 'Public'})`}
+                </span>
+                <button
+                  onClick={logout}
+                  className="text-red-400 hover:text-red-300 text-[10px] flex items-center gap-0.5 cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3 h-3" />
+                </button>
+              </div>
             ) : (
-              <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>Checking...</span>
+              <Link
+                to="/portfolio"
+                className="text-amber-400 hover:text-amber-300 text-[10px] font-medium flex items-center gap-1"
+              >
+                <LogIn className="w-3 h-3" />
+                <span>Sign In / Register</span>
+              </Link>
             )}
           </div>
         </div>
@@ -89,7 +146,7 @@ export const Header = ({
       <div className="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
         
         {/* Left Branding */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={onToggleSidebar}
             className={`p-2 rounded-xl border transition-colors lg:hidden cursor-pointer ${
@@ -133,10 +190,75 @@ export const Header = ({
           </div>
         </div>
 
-        {/* Center Global Search Trigger */}
+        {/* Center: Parliamentary House Switcher + State Scoping Selector */}
+        <div className="hidden xl:flex items-center gap-2">
+          {/* House Switcher */}
+          <div className={`flex items-center p-1 rounded-xl border text-xs font-semibold ${
+            isDark ? 'bg-black/40 border-white/10' : 'bg-slate-100/90 border-slate-200'
+          }`}>
+            <button
+              onClick={() => setSelectedHouse('All')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                selectedHouse === 'All'
+                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All Houses
+            </button>
+            <button
+              onClick={() => setSelectedHouse('Lok Sabha')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                selectedHouse === 'Lok Sabha'
+                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>Lok Sabha</span>
+              <span className="text-[10px] opacity-75 font-mono">(543)</span>
+            </button>
+            <button
+              onClick={() => setSelectedHouse('Rajya Sabha')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                selectedHouse === 'Rajya Sabha'
+                  ? 'bg-purple-600 text-white shadow-xs font-bold'
+                  : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>Rajya Sabha</span>
+              <span className="text-[10px] opacity-75 font-mono">(231)</span>
+            </button>
+          </div>
+
+          {/* State Selector */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs ${
+            isDark ? 'bg-black/40 border-white/10 text-slate-300' : 'bg-slate-100/90 border-slate-200 text-slate-700'
+          }`}>
+            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <select
+              value={selectedState === 'All' ? 'All India' : selectedState}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedState(val === 'All India' ? 'All' : val);
+              }}
+              className={`bg-transparent text-xs font-medium focus:outline-none cursor-pointer ${
+                isDark ? 'text-white' : 'text-slate-900'
+              }`}
+              title="Filter by State (Scoped Public View)"
+            >
+              {INDIAN_STATES.map((st) => (
+                <option key={st} value={st} className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>
+                  {st}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Global Search Trigger */}
         <button
           onClick={onOpenSearch}
-          className={`hidden md:flex items-center justify-between gap-3 px-3.5 py-1.5 border rounded-xl text-xs w-64 max-w-xs transition-all group cursor-pointer ${
+          className={`hidden md:flex items-center justify-between gap-3 px-3.5 py-1.5 border rounded-xl text-xs w-56 max-w-xs transition-all group cursor-pointer ${
             isDark 
               ? 'bg-black/40 hover:bg-black/60 border-white/10 hover:border-cyan-500/40 text-slate-200' 
               : 'bg-slate-100/90 hover:bg-slate-200/80 border-slate-200 hover:border-blue-400 text-slate-800'
@@ -149,7 +271,7 @@ export const Header = ({
             <span className={`font-medium ${
               isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-600 group-hover:text-slate-900'
             }`}>
-              Search works, MPs, IDA...
+              Search works, MPs...
             </span>
           </div>
           <kbd className={`text-[10px] px-1.5 py-0.5 rounded border font-mono font-bold ${
@@ -162,7 +284,7 @@ export const Header = ({
         {/* Right Controls */}
         <div className="flex items-center gap-2">
           {/* Glass Intensity Slider */}
-          <div className={`hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-xl border backdrop-blur-md shadow-2xs ${
+          <div className={`hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-xl border backdrop-blur-md shadow-2xs ${
             isDark ? 'bg-black/40 border-white/10 text-slate-300' : 'bg-slate-100/90 border-slate-200 text-slate-700'
           }`}>
             <SlidersHorizontal className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
@@ -176,7 +298,7 @@ export const Header = ({
               step="5"
               value={glassIntensity}
               onChange={(e) => setGlassIntensity(Number(e.target.value))}
-              className={`w-16 h-1.5 cursor-pointer rounded-lg ${isDark ? 'accent-cyan-400 bg-slate-700' : 'accent-blue-600 bg-slate-300'}`}
+              className={`w-14 h-1.5 cursor-pointer rounded-lg ${isDark ? 'accent-cyan-400 bg-slate-700' : 'accent-blue-600 bg-slate-300'}`}
               title={`Adjust Liquid Glass Blur & Opacity (${glassIntensity}%)`}
             />
           </div>
@@ -189,18 +311,18 @@ export const Header = ({
                 ? 'border-white/10 bg-white/5 hover:bg-white/10 text-slate-200' 
                 : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-800 shadow-2xs'
             }`}
-            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode (Liquid Glass UI)"}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             aria-label="Toggle Dark and Light Mode"
           >
             {isDark ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Light Mode</span>
+                <span className="hidden sm:inline">Light</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-blue-600" />
-                <span className="hidden sm:inline">Dark Mode</span>
+                <span className="hidden sm:inline">Dark</span>
               </>
             )}
           </button>

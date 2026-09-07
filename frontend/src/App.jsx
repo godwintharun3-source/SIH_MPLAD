@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import DemoBanner from './components/DemoBanner';
@@ -8,7 +8,9 @@ import GlobalSearchModal from './components/GlobalSearchModal';
 import RobotGuide from './components/RobotGuide';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTheme } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
+import PortfolioPage from './pages/PortfolioPage';
 import DashboardPage from './pages/DashboardPage';
 import HighRiskProjectsPage from './pages/HighRiskProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
@@ -18,8 +20,9 @@ import AnomaliesPage from './pages/AnomaliesPage';
 import ReportsPage from './pages/ReportsPage';
 import TransparencyPage from './pages/TransparencyPage';
 
-export function App() {
+function AppContent() {
   const { isDark } = useTheme();
+  const location = useLocation();
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [aiContextProject, setAiContextProject] = useState(null);
   const [aiInitialQuery, setAiInitialQuery] = useState(null);
@@ -51,11 +54,15 @@ export function App() {
     setIsAIOpen(true);
   };
 
+  // Dedicated full-screen view for the Opening Portfolio Page
+  if (location.pathname === '/portfolio') {
+    return <PortfolioPage />;
+  }
+
   return (
-    <Router>
-      <div className={`h-screen flex flex-col overflow-hidden theme-app-shell font-sans transition-colors duration-200 p-2.5 sm:p-3.5 gap-2.5 sm:gap-3.5 ${
-        isDark ? 'text-slate-100 selection:bg-cyan-500/30' : 'text-slate-900 selection:bg-blue-500/30'
-      }`}>
+    <div className={`h-screen flex flex-col overflow-hidden theme-app-shell font-sans transition-colors duration-200 p-2.5 sm:p-3.5 gap-2.5 sm:gap-3.5 ${
+      isDark ? 'text-slate-100 selection:bg-cyan-500/30' : 'text-slate-900 selection:bg-blue-500/30'
+    }`}>
         
         {/* Floating Curved Rectangle Boxy Top Menubar */}
         <div className="shrink-0 z-40 no-print">
@@ -172,6 +179,15 @@ export function App() {
         />
 
       </div>
+  );
+}
+
+export function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }
