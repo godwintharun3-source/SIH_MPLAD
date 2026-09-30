@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ShieldAlert, 
@@ -7,18 +7,20 @@ import {
   ArrowUpDown, 
   Download, 
   ExternalLink, 
-  RefreshCw,
+  RefreshCw, 
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   Scale,
-  Sparkles
+  Sparkles,
+  FileSpreadsheet
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import RiskBadge from '../components/RiskBadge';
 import ProjectCompareModal from '../components/ProjectCompareModal';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { exportToExcel } from '../utils/excelExport';
 
 export const HighRiskProjectsPage = () => {
   const { selectedHouse, setSelectedHouse, selectedState, setSelectedState } = useAuth();
@@ -32,11 +34,13 @@ export const HighRiskProjectsPage = () => {
   const [search, setSearch] = useState('');
   const [house, setHouse] = useState(selectedHouse || 'All');
   const [state, setState] = useState(selectedState !== 'All' ? selectedState : 'All');
+  const [mpName, setMpName] = useState('All');
   const [category, setCategory] = useState('All');
   const [riskLevel, setRiskLevel] = useState('All');
   const [status, setStatus] = useState('All');
   const [sortBy, setSortBy] = useState('risk_score');
   const [sortDir, setSortDir] = useState('desc');
+  const [mpList, setMpList] = useState([]);
 
   // Compare modal
   const [compareModalOpen, setCompareModalOpen] = useState(false);
@@ -45,6 +49,22 @@ export const HighRiskProjectsPage = () => {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Load MP filter options
+  useEffect(() => {
+    api.getMpFilterOptions().then((res) => {
+      if (res && res.mps) setMpList(res.mps);
+    }).catch(console.error);
+  }, []);
+
+  // Filter MPs based on chosen house and state
+  const filteredMps = useMemo(() => {
+    return mpList.filter((m) => {
+      if (house !== 'All' && m.house !== house) return false;
+      if (state !== 'All' && m.state !== state) return false;
+      return true;
+    });
+  }, [mpList, house, state]);
 
   // Sync with global header state changes
   useEffect(() => {
@@ -59,16 +79,19 @@ export const HighRiskProjectsPage = () => {
     const initialRisk = searchParams.get('risk');
     const initialState = searchParams.get('state');
     const initialHouse = searchParams.get('house');
+    const initialMp = searchParams.get('mp');
     const initialStatus = searchParams.get('status');
+
     if (initialRisk) setRiskLevel(initialRisk);
     if (initialState) setState(initialState);
     if (initialHouse) setHouse(initialHouse);
+    if (initialMp) setMpName(initialMp);
     if (initialStatus) setStatus(initialStatus);
   }, [searchParams]);
 
   useEffect(() => {
     fetchProjects();
-  }, [page, house, state, category, riskLevel, status, sortBy, sortDir]);
+  }, [page, house, state, mpName, category, riskLevel, status, sortBy, sortDir]);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -78,6 +101,7 @@ export const HighRiskProjectsPage = () => {
         page_size: 25,
         house: house !== 'All' ? house : undefined,
         state: state !== 'All' ? state : undefined,
+        mp_name: mpName !== 'All' ? mpName : undefined,
         category: category !== 'All' ? category : undefined,
         risk_level: riskLevel !== 'All' ? riskLevel : undefined,
         completion_status: status !== 'All' ? status : undefined,
@@ -112,6 +136,28 @@ export const HighRiskProjectsPage = () => {
     }
   };
 
+  const handleExportXLS = () => {
+    if (!projects || projects.length === 0) return;
+    const excelData = projects.map(p => ({
+      "Project ID": p.project_id,
+      "Work ID": p.work_id || p.project_id,
+      "Work Description": p.work_description || '',
+      "MP Name": p.mp_name || '',
+      "House": p.house || '',
+      "Constituency": p.constituency || '',
+      "State": p.state || '',
+      "Category": p.category || '',
+      "Recommended (₹)": p.recommended_amount || 0,
+      "Final (₹)": p.final_amount || 0,
+      "Cost Deviation %": p.cost_deviation_pct || 0,
+      "Risk Score": p.risk_score || 0,
+      "Risk Level": p.risk_level || '',
+      "Primary Reason": p.primary_reason || '',
+      "Status": p.completion_status || ''
+    }));
+    exportToExcel(excelData, 'MPLAD_Priority_Review_Queue', 'High Risk Projects');
+  };
+
   const handleExportCSV = () => {
     if (!projects || projects.length === 0) return;
     const headers = ["Project ID", "Work Description", "MP Name", "Constituency", "State", "Category", "Recommended (INR)", "Final (INR)", "Cost Deviation %", "Risk Score", "Risk Level", "Primary Reason"];
@@ -130,14 +176,16 @@ export const HighRiskProjectsPage = () => {
       `"${(p.primary_reason || '').replace(/"/g, '""')}"`
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `MPLAD_Priority_Review_Queue_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `MPLAD_Priority_Review_Queue_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const statesList = [
@@ -184,8 +232,15 @@ export const HighRiskProjectsPage = () => {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={handleExportXLS}
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-emerald-950/20 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Export XLS</span>
+          </button>
+          <button
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4 text-blue-600" />
             <span>Export CSV</span>
@@ -217,26 +272,77 @@ export const HighRiskProjectsPage = () => {
             </button>
           </form>
 
-          {/* Quick Metrics Count */}
-          <div className="flex items-center gap-2 self-start lg:self-auto text-xs text-slate-600 dark:text-slate-400 font-mono">
+          {/* Quick Metrics Count & Reset */}
+          <div className="flex items-center gap-3 self-start lg:self-auto text-xs text-slate-600 dark:text-slate-400 font-mono">
             <span>Showing <strong className="text-slate-900 dark:text-white font-bold">{projects.length}</strong> of <strong className="text-slate-900 dark:text-white font-bold">{total.toLocaleString()}</strong> matched works</span>
+            {(house !== 'All' || state !== 'All' || mpName !== 'All' || category !== 'All' || riskLevel !== 'All' || status !== 'All' || search) && (
+              <button
+                onClick={() => {
+                  setHouse('All');
+                  setState('All');
+                  setMpName('All');
+                  setCategory('All');
+                  setRiskLevel('All');
+                  setStatus('All');
+                  setSearch('');
+                  setSelectedHouse('All');
+                  setSelectedState('All');
+                  setPage(1);
+                }}
+                className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 text-[11px] font-sans font-medium transition-colors cursor-pointer"
+              >
+                Reset All
+              </button>
+            )}
           </div>
         </div>
 
         {/* Dropdown Filters Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100 dark:border-white/10">
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5 pt-3 border-t border-slate-100 dark:border-white/10">
           
           {/* Parliamentary House Filter */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">House</label>
             <select
               value={house}
-              onChange={(e) => { setHouse(e.target.value); setSelectedHouse(e.target.value); setPage(1); }}
-              className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-[#121829] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs font-medium"
+              onChange={(e) => { setHouse(e.target.value); setSelectedHouse(e.target.value); setMpName('All'); setPage(1); }}
+              className="w-full px-2 py-1.5 bg-slate-50 dark:bg-[#121829] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs font-medium"
             >
               <option value="All">All Houses</option>
               <option value="Lok Sabha">Lok Sabha (543)</option>
               <option value="Rajya Sabha">Rajya Sabha (231)</option>
+            </select>
+          </div>
+
+          {/* State Filter */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">State</label>
+            <select
+              value={state}
+              onChange={(e) => { setState(e.target.value); setSelectedState(e.target.value); setMpName('All'); setPage(1); }}
+              className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-[#121829] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs font-medium"
+            >
+              {statesList.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          {/* MP Name Filter */}
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">MP Name</label>
+            <select
+              value={mpName}
+              onChange={(e) => { setMpName(e.target.value); setPage(1); }}
+              className="w-full px-2 py-1.5 bg-slate-50 dark:bg-[#121829] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs font-medium"
+            >
+              <option value="All">All MPs ({filteredMps.length})</option>
+              {filteredMps.map(m => {
+                const name = m.mp_name || '';
+                return (
+                  <option key={name} value={name}>
+                    {name.length > 20 ? name.slice(0, 19) + '…' : name} ({m.house === 'Lok Sabha' ? 'LS' : 'RS'})
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -253,18 +359,6 @@ export const HighRiskProjectsPage = () => {
               <option value="HIGH">High (61–80)</option>
               <option value="MEDIUM">Medium (31–60)</option>
               <option value="LOW">Low (0–30)</option>
-            </select>
-          </div>
-
-          {/* State Filter */}
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">State</label>
-            <select
-              value={state}
-              onChange={(e) => { setState(e.target.value); setPage(1); }}
-              className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-[#121829] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs font-medium"
-            >
-              {statesList.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
 
@@ -338,44 +432,44 @@ export const HighRiskProjectsPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto max-h-[620px] overflow-y-auto scroll-smooth table-scroll">
-            <table className="w-full text-left text-xs border-collapse min-w-[980px]">
+            <table className="w-full text-left text-xs border-collapse min-w-[920px]">
               <thead className="sticky top-0 z-10 app-table-th shadow-2xs">
                 <tr>
-                  <th className="px-3.5 py-3.5 text-center w-[130px]">Risk Level & Score</th>
-                  <th className="px-3.5 py-3.5 max-w-[240px]">Project ID & Description</th>
-                  <th className="px-3.5 py-3.5 w-[160px]">Location & MP</th>
-                  <th className="px-3.5 py-3.5 max-w-[280px]">Primary Anomaly Reason</th>
-                  <th className="px-3.5 py-3.5 text-center w-[95px]">Cost Dev %</th>
-                  <th className="px-3.5 py-3.5 text-right w-[110px]">Recommended</th>
-                  <th className="px-3.5 py-3.5 text-right w-[115px]">Final Amount</th>
-                  <th className="px-3.5 py-3.5 text-center w-[95px]">Actions</th>
+                  <th className="px-3 py-3 text-center w-[120px]">Risk Level & Score</th>
+                  <th className="px-3 py-3 max-w-[220px]">Project ID & Description</th>
+                  <th className="px-3 py-3 w-[150px]">Location & MP</th>
+                  <th className="px-3 py-3 max-w-[250px]">Primary Anomaly Reason</th>
+                  <th className="px-3 py-3 text-center w-[85px]">Cost Dev %</th>
+                  <th className="px-3 py-3 text-right w-[100px]">Recommended</th>
+                  <th className="px-3 py-3 text-right w-[105px]">Final Amount</th>
+                  <th className="px-3 py-3 text-center w-[95px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 font-medium">
                 {projects.map((p) => (
                   <tr key={p.project_id} className="app-table-row group">
-                    <td className="px-3.5 py-3.5 text-center whitespace-nowrap">
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
                       <RiskBadge level={p.risk_level} score={p.risk_score} size="md" />
                     </td>
-                    <td className="px-3.5 py-3.5 max-w-[240px]">
+                    <td className="px-3 py-3 max-w-[220px]">
                       <div className="font-mono font-bold text-blue-700 dark:text-cyan-400 text-xs">#{p.project_id}</div>
                       <div className="app-table-title truncate mt-0.5" title={p.work_description}>
                         {p.work_description}
                       </div>
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{p.category}</div>
                     </td>
-                    <td className="px-3.5 py-3.5 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       <div className="app-table-location">{p.constituency}, {p.state}</div>
                       <div className="app-table-mp truncate max-w-[140px] mt-0.5">{p.mp_name}</div>
                     </td>
-                    <td className="px-3.5 py-3.5 max-w-[280px]">
-                      <span className="anomaly-pill truncate max-w-[270px] inline-block" title={p.primary_reason}>
+                    <td className="px-3 py-3 max-w-[250px]">
+                      <span className="anomaly-pill truncate max-w-[240px] inline-block" title={p.primary_reason}>
                         {p.primary_reason}
                       </span>
                     </td>
-                    <td className="px-3.5 py-3.5 text-center font-mono font-bold whitespace-nowrap">
+                    <td className="px-3 py-3 text-center font-mono font-bold whitespace-nowrap">
                       {p.cost_deviation_pct !== 0 ? (
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${
                           p.cost_deviation_pct > 0 
                             ? 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/40' 
                             : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40'
@@ -386,17 +480,17 @@ export const HighRiskProjectsPage = () => {
                         <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="px-3.5 py-3.5 text-right whitespace-nowrap">
+                    <td className="px-3 py-3 text-right whitespace-nowrap">
                       <span className="app-table-amount">₹{p.recommended_amount.toLocaleString('en-IN')}</span>
                     </td>
-                    <td className="px-3.5 py-3.5 text-right whitespace-nowrap">
+                    <td className="px-3 py-3 text-right whitespace-nowrap">
                       {p.final_amount > 0 ? (
                         <span className="app-table-amount-bold">₹{p.final_amount.toLocaleString('en-IN')}</span>
                       ) : (
                         <span className="text-slate-400 italic text-[11px]">Pending Registry</span>
                       )}
                     </td>
-                    <td className="px-3.5 py-3.5 text-center whitespace-nowrap">
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleOpenCompare(p)}
@@ -407,7 +501,7 @@ export const HighRiskProjectsPage = () => {
                         </button>
                         <button
                           onClick={() => navigate(`/project/${p.project_id}`)}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs cursor-pointer"
+                          className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs cursor-pointer"
                         >
                           Inspect
                         </button>

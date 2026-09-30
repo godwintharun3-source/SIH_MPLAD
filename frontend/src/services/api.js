@@ -48,6 +48,7 @@ export const api = {
     const query = new URLSearchParams();
     if (params.house && params.house !== 'All') query.append('house', params.house);
     if (params.state && params.state !== 'All') query.append('state', params.state);
+    if (params.mp_name && params.mp_name !== 'All') query.append('mp_name', params.mp_name);
     const qs = query.toString();
     return fetchJson(`/dashboard/summary${qs ? `?${qs}` : ''}`);
   },
@@ -67,6 +68,7 @@ export const api = {
     const query = new URLSearchParams({ limit });
     if (params.house && params.house !== 'All') query.append('house', params.house);
     if (params.state && params.state !== 'All') query.append('state', params.state);
+    if (params.mp_name && params.mp_name !== 'All') query.append('mp_name', params.mp_name);
     return fetchJson(`/projects/high-risk?${query.toString()}`);
   },
   getProjectDetail: (projectId) => fetchJson(`/projects/${projectId}`),
@@ -78,6 +80,19 @@ export const api = {
     const query = state && state !== 'All' ? `?state=${encodeURIComponent(state)}` : '';
     return fetchJson(`/house/analytics${query}`);
   },
+
+  // Filter Options (States, Houses, and MPs)
+  getMpFilterOptions: () => fetchJson('/mps/filter-options'),
+
+  // Calamity and Disaster Relief Consents
+  getCalamityFunds: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.house && params.house !== 'All') query.append('house', params.house);
+    if (params.state && params.state !== 'All') query.append('state', params.state);
+    const qs = query.toString();
+    return fetchJson(`/calamity-funds${qs ? `?${qs}` : ''}`);
+  },
+  getCalamitySummary: () => fetchJson('/calamity-funds/summary'),
 
   // Anomalies
   getCostAnomalies: (limit = 50) => fetchJson(`/anomalies/cost?limit=${limit}`),
@@ -93,6 +108,9 @@ export const api = {
     if (params.house && params.house !== 'All') query.append('house', params.house);
     if (params.state && params.state !== 'All') query.append('state', params.state);
     return fetchJson(`/mps?${query.toString()}`);
+  },
+  getMPs: (limit = 100) => {
+    return api.getMps('', limit);
   },
   getMpDetail: (mpName) => fetchJson(`/mps/${encodeURIComponent(mpName)}`),
   getConstituencies: (limit = 100) => fetchJson(`/constituencies?limit=${limit}`),

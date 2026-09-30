@@ -54,13 +54,30 @@ function AppContent() {
     setIsAIOpen(true);
   };
 
-  // Dedicated full-screen view for the Opening Portfolio Page
-  if (location.pathname === '/portfolio') {
-    return <PortfolioPage />;
+  const { isAuthenticated } = useAuth();
+  const [hasEnteredApp, setHasEnteredApp] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('mplad_has_entered') === 'true';
+    }
+    return false;
+  });
+
+  // Dedicated view for the Opening Portfolio Page or initial pre-login entry flow
+  if (location.pathname === '/portfolio' || (!isAuthenticated && !hasEnteredApp && location.pathname === '/')) {
+    return (
+      <PortfolioPage 
+        onEnterApp={() => {
+          setHasEnteredApp(true);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('mplad_has_entered', 'true');
+          }
+        }} 
+      />
+    );
   }
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden theme-app-shell font-sans transition-colors duration-200 p-2.5 sm:p-3.5 gap-2.5 sm:gap-3.5 ${
+    <div className={`h-screen flex flex-col overflow-hidden theme-app-shell font-sans transition-colors duration-200 p-2.5 sm:p-3.5 gap-2.5 sm:gap-3.5 app-entry-popup ${
       isDark ? 'text-slate-100 selection:bg-cyan-500/30' : 'text-slate-900 selection:bg-blue-500/30'
     }`}>
         
@@ -104,27 +121,32 @@ function AppContent() {
             />
           </div>
 
-          {/* Main Scrollable Viewport (Scrolls independently with clean spacing) */}
-          <div className={`theme-viewport flex-1 overflow-y-auto min-w-0 flex flex-col justify-between h-full rounded-2xl border shadow-xl transition-all duration-200 ${
+          {/* Main Scrollable Viewport (Scrolls independently with liquid glass transparency) */}
+          <div className={`theme-viewport flex-1 overflow-y-auto min-w-0 flex flex-col justify-between h-full rounded-2xl border shadow-2xl transition-all duration-300 relative ${
             isDark 
-              ? 'bg-[#0b101d]/90 backdrop-blur-3xl border-white/10 shadow-black/80 text-white' 
-              : 'bg-white/95 backdrop-blur-3xl border-slate-200/90 shadow-lg text-slate-900'
+              ? 'bg-[#0a0f1d]/75 backdrop-blur-3xl border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] text-white' 
+              : 'bg-white/80 backdrop-blur-3xl border-white/90 shadow-[0_20px_50px_rgba(31,38,135,0.08),inset_0_1px_2px_rgba(255,255,255,0.95)] text-slate-900'
           }`}>
+            <div className="glass-sheen" />
+
             <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
-              <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/high-risk" element={<HighRiskProjectsPage />} />
-                <Route path="/project/:id" element={<ProjectDetailPage />} />
-                <Route path="/mps" element={<MPAnalyticsPage />} />
-                <Route path="/states" element={<StateAnalyticsPage />} />
-                <Route path="/anomalies" element={<AnomaliesPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/transparency" element={<TransparencyPage />} />
-              </Routes>
+              <div key={location.pathname} className="route-stagger-container">
+                <Routes>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/high-risk" element={<HighRiskProjectsPage />} />
+                  <Route path="/project/:id" element={<ProjectDetailPage />} />
+                  <Route path="/mps" element={<MPAnalyticsPage />} />
+                  <Route path="/states" element={<StateAnalyticsPage />} />
+                  <Route path="/anomalies" element={<AnomaliesPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/transparency" element={<TransparencyPage />} />
+                </Routes>
+              </div>
             </main>
 
             {/* Official Footer */}
-            <footer className="no-print bg-slate-200/50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 text-xs border-t border-slate-300/60 dark:border-slate-800/80 py-6 mt-12 shrink-0 rounded-b-[28px]">
+            <footer className="no-print bg-slate-200/40 dark:bg-slate-950/60 backdrop-blur-xl text-slate-600 dark:text-slate-400 text-xs border-t border-slate-300/40 dark:border-white/10 py-6 mt-12 shrink-0 rounded-b-2xl">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
                   <p className="font-bold text-slate-800 dark:text-slate-200">

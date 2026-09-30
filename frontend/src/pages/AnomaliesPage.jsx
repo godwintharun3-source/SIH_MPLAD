@@ -20,11 +20,13 @@ import {
   Zap,
   Info,
   Sliders,
-  Database
+  Database,
+  FileSpreadsheet
 } from 'lucide-react';
 import { api } from '../services/api';
 import RiskBadge from '../components/RiskBadge';
 import { ProjectCompareModal } from '../components/ProjectCompareModal';
+import { exportToExcel } from '../utils/excelExport';
 
 export const AnomaliesPage = () => {
   const [tab, setTab] = useState('cost'); // 'cost', 'completion', 'sector', 'duplicate', 'payment'
@@ -98,6 +100,90 @@ export const AnomaliesPage = () => {
     }
   };
 
+  const handleExportCurrentTab = () => {
+    if (tab === 'cost') {
+      const rows = costAnomalies.map(p => ({
+        'Project ID': p.project_id,
+        'Work ID': p.work_id,
+        'Work Description': p.work_description,
+        'Category': p.category,
+        'MP Name': p.mp_name,
+        'Constituency': p.constituency,
+        'State': p.state,
+        'Sanctioned (INR)': p.recommended_amount,
+        'Final Exp (INR)': p.final_amount,
+        'Cost Escalation (%)': p.cost_escalation_pct,
+        'Escalation Ratio': p.escalation_ratio ? `${p.escalation_ratio}x` : '',
+        'Risk Level': p.risk_level,
+        'Risk Score': p.risk_score
+      }));
+      exportToExcel(rows, 'MPLAD_Cost_Deviations', 'Cost Escalation');
+    } else if (tab === 'completion') {
+      const rows = compAnomalies.map(p => ({
+        'Project ID': p.project_id,
+        'Work ID': p.work_id,
+        'Work Description': p.work_description,
+        'Category': p.category,
+        'MP Name': p.mp_name,
+        'Constituency': p.constituency,
+        'State': p.state,
+        'Expenditure (INR)': p.final_amount,
+        'Disbursement Ratio': p.financial_disbursement_ratio ? `${p.financial_disbursement_ratio * 100}%` : '',
+        'Physical Progress': p.physical_progress || '0%',
+        'Anomaly Type': p.anomaly_type,
+        'Anomaly Reason': p.reason
+      }));
+      exportToExcel(rows, 'MPLAD_Completion_Anomalies', 'Completion Concern');
+    } else if (tab === 'sector') {
+      const rows = sectorAnomalies.map(p => ({
+        'Project ID': p.project_id,
+        'Work ID': p.work_id,
+        'Work Description': p.work_description,
+        'Sector': p.sector || p.category,
+        'MP Name': p.mp_name,
+        'Constituency': p.constituency,
+        'State': p.state,
+        'Sanctioned Cost (INR)': p.recommended_amount,
+        'Sector Median (INR)': p.peer_median_amount,
+        'Deviation Ratio': `${p.deviation_ratio}x`,
+        'Deviation Pct (%)': `+${p.sector_deviation_pct}%`,
+        'Peer Comparable Works': p.comparable_works_count,
+        'Reason': p.reason
+      }));
+      exportToExcel(rows, 'MPLAD_Sector_Benchmark_Deviations', 'Sector Deviations');
+    } else if (tab === 'duplicate') {
+      const rows = dupAnomalies.map((tx, idx) => ({
+        'Cluster / Voucher ID': tx.transaction_id ? `VCH-${tx.transaction_id}` : `VCH-CL-${idx + 101}`,
+        'Payee / Vendor': tx.vendor,
+        'Work Description': tx.work_description || '',
+        'MP Name': tx.mp_name,
+        'Constituency': tx.constituency,
+        'State': tx.state,
+        'Per Voucher (INR)': tx.expenditure_amount,
+        'Repeat Count': tx.repeat_count || tx.sig_repeat_count || 2,
+        'Total Exposure (INR)': tx.total_amount || (tx.expenditure_amount * (tx.repeat_count || 2)),
+        'Disbursement Date': tx.expenditure_date,
+        'Matched Project ID': tx.matched_project_id ? `Project #${tx.matched_project_id}` : 'Unmatched'
+      }));
+      exportToExcel(rows, 'MPLAD_Duplicate_Signatures', 'Duplicate Clusters');
+    } else if (tab === 'payment') {
+      const rows = payAnomalies.map(p => ({
+        'Cluster ID': p.cluster_id,
+        'Vendor / Payee': p.vendor,
+        'MP Name': p.mp_name,
+        'Constituency': p.constituency,
+        'State': p.state,
+        'Voucher Count': p.voucher_count,
+        'Total Disbursed (INR)': p.total_cluster_amount,
+        'Avg Voucher (INR)': p.avg_voucher_amount,
+        'Span (Days)': p.span_days,
+        'Burst Density Ratio': `${p.density_ratio}x`,
+        'Reason': p.reason
+      }));
+      exportToExcel(rows, 'MPLAD_Payment_Burst_Patterns', 'Payment Bursts');
+    }
+  };
+
   return (
     <div className="space-y-6 pb-16 max-w-7xl mx-auto">
       
@@ -117,19 +203,27 @@ export const AnomaliesPage = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+            <span className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono font-bold hidden sm:inline-block">
               50 Top Outliers Loaded per Module
             </span>
+            <button
+              onClick={handleExportCurrentTab}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-2xs hover:shadow-sm cursor-pointer"
+              title="Export currently active anomaly intelligence view to Excel (.xlsx)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export XLS</span>
+            </button>
           </div>
         </div>
 
         {/* Tab Selection (Final 5-Tab Order) */}
-        <div className="flex gap-2 mt-5 border-b border-slate-100 pb-2 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-2 mt-5 border-b border-slate-100 pb-3">
           
           {/* TAB 1: Cost Deviations */}
           <button
             onClick={() => setTab('cost')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               tab === 'cost'
                 ? 'bg-blue-600 text-white shadow-2xs'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -142,7 +236,7 @@ export const AnomaliesPage = () => {
           {/* TAB 2: Completion Concern */}
           <button
             onClick={() => setTab('completion')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               tab === 'completion'
                 ? 'bg-blue-600 text-white shadow-2xs'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -155,7 +249,7 @@ export const AnomaliesPage = () => {
           {/* TAB 3: Sector Deviation */}
           <button
             onClick={() => setTab('sector')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               tab === 'sector'
                 ? 'bg-blue-600 text-white shadow-2xs'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -165,30 +259,30 @@ export const AnomaliesPage = () => {
             <span>Sector Deviation ({sectorAnomalies.length})</span>
           </button>
 
-          {/* TAB 4: Potential Duplicate Transactions */}
+          {/* TAB 4: Duplicate Transactions */}
           <button
             onClick={() => setTab('duplicate')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               tab === 'duplicate'
                 ? 'bg-blue-600 text-white shadow-2xs'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             <Copy className="w-4 h-4" />
-            <span>Potential Duplicate Transactions ({dupAnomalies.length})</span>
+            <span>Duplicate Transactions ({dupAnomalies.length})</span>
           </button>
 
-          {/* TAB 5: Payment & Frequency Patterns */}
+          {/* TAB 5: Payment Patterns */}
           <button
             onClick={() => setTab('payment')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
               tab === 'payment'
                 ? 'bg-blue-600 text-white shadow-2xs'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             <CreditCard className="w-4 h-4" />
-            <span>Payment & Frequency Patterns ({payAnomalies.length})</span>
+            <span>Payment Patterns ({payAnomalies.length})</span>
           </button>
         </div>
       </div>
@@ -487,17 +581,17 @@ export const AnomaliesPage = () => {
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[850px]">
                 <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3">Cluster / Voucher ID</th>
-                    <th className="px-4 py-3">Payee / Vendor</th>
-                    <th className="px-4 py-3">MP & Location</th>
-                    <th className="px-4 py-3 text-right">Per Voucher</th>
-                    <th className="px-4 py-3 text-center">Repeat Frequency</th>
-                    <th className="px-4 py-3 text-right">Total Cluster Exposure</th>
-                    <th className="px-4 py-3 text-center">Disbursement Date</th>
-                    <th className="px-4 py-3 text-center">Matched Work</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">Cluster / Voucher ID</th>
+                    <th className="px-3 py-2.5">Payee / Vendor</th>
+                    <th className="px-3 py-2.5">MP & Location</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Per Voucher</th>
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap">Frequency</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Total Exposure</th>
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap">Disbursement Date</th>
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap">Matched Work</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -507,10 +601,10 @@ export const AnomaliesPage = () => {
                     const voucherCode = tx.transaction_id ? `VCH-${tx.transaction_id}` : `VCH-CL-${idx + 101}`;
                     return (
                       <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-blue-900 whitespace-nowrap">
+                        <td className="px-3 py-2.5 font-mono font-bold text-blue-900 whitespace-nowrap">
                           {voucherCode}
                         </td>
-                        <td className="px-4 py-3 max-w-xs">
+                        <td className="px-3 py-2.5 max-w-[200px]">
                           <div className="font-bold text-slate-900 truncate" title={tx.vendor}>{tx.vendor}</div>
                           {tx.work_description && (
                             <div className="text-[10px] text-slate-500 truncate mt-0.5" title={tx.work_description}>
@@ -518,34 +612,34 @@ export const AnomaliesPage = () => {
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          <div className="font-bold text-slate-800">{tx.mp_name}</div>
-                          <div className="text-[10px] text-slate-500">{tx.constituency}, {tx.state}</div>
+                        <td className="px-3 py-2.5 max-w-[180px]">
+                          <div className="font-bold text-slate-800 truncate" title={tx.mp_name}>{tx.mp_name}</div>
+                          <div className="text-[10px] text-slate-500 truncate">{tx.constituency}, {tx.state}</div>
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-slate-700">
+                        <td className="px-3 py-2.5 text-right font-mono text-slate-700 whitespace-nowrap">
                           ₹{Number(tx.expenditure_amount || 0).toLocaleString('en-IN')}
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-900 border border-purple-300 font-mono inline-block shadow-2xs">
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-purple-100 text-purple-900 border border-purple-300 font-mono inline-block shadow-2xs">
                             {count}x Repeated
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right font-mono font-black text-purple-950">
+                        <td className="px-3 py-2.5 text-right font-mono font-black text-purple-950 whitespace-nowrap">
                           ₹{Number(totalAmt).toLocaleString('en-IN')}
                         </td>
-                        <td className="px-4 py-3 text-center font-mono text-slate-600">
+                        <td className="px-3 py-2.5 text-center font-mono text-slate-600 whitespace-nowrap">
                           {tx.expenditure_date || 'N/A'}
                         </td>
-                        <td className="px-4 py-3 text-center whitespace-nowrap">
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
                           {tx.matched_project_id ? (
                             <button
                               onClick={() => navigate(`/project/${tx.matched_project_id}`)}
-                              className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-blue-700 font-bold text-[11px] border border-slate-200 shadow-2xs"
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] border border-blue-200 transition-colors shadow-2xs cursor-pointer"
                             >
                               Project #{tx.matched_project_id}
                             </button>
                           ) : (
-                            <span className="text-slate-400 italic">Unmatched</span>
+                            <span className="text-slate-400 italic text-[11px]">Unmatched</span>
                           )}
                         </td>
                       </tr>

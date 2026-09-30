@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import RiskBadge from '../components/RiskBadge';
+import { exportToExcel } from '../utils/excelExport';
 
 export const ReportsPage = () => {
   const [summary, setSummary] = useState(null);
@@ -49,32 +50,61 @@ export const ReportsPage = () => {
   const handleExportHighRiskCSV = async () => {
     setGeneratingReport('high-risk-csv');
     try {
-      const res = await api.getProjects({ risk_level: 'HIGH,CRITICAL', page: 1, page_size: 100 });
+      const res = await api.getProjects({ risk_level: 'HIGH,CRITICAL', page: 1, page_size: 200 });
       const items = res.items || [];
       const headers = ["Project ID", "Work Description", "Category", "MP Name", "Constituency", "State", "Sanction Amount", "Final Amount", "Cost Deviation %", "Risk Score", "Risk Level", "Primary Reason"];
       const rows = items.map(p => [
         p.project_id,
         `"${(p.work_description || '').replace(/"/g, '""')}"`,
-        p.category,
-        `"${p.mp_name}"`,
-        p.constituency,
-        p.state,
-        p.recommended_amount,
-        p.final_amount,
-        p.cost_deviation_pct,
-        p.risk_score,
-        p.risk_level,
+        `"${(p.category || '').replace(/"/g, '""')}"`,
+        `"${(p.mp_name || '').replace(/"/g, '""')}"`,
+        `"${(p.constituency || '').replace(/"/g, '""')}"`,
+        `"${(p.state || '').replace(/"/g, '""')}"`,
+        p.recommended_amount || 0,
+        p.final_amount || 0,
+        p.cost_deviation_pct || 0,
+        p.risk_score || 0,
+        p.risk_level || '',
         `"${(p.primary_reason || '').replace(/"/g, '""')}"`
       ]);
 
-      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-      const encodedUri = encodeURI(csvContent);
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
+      link.setAttribute("href", url);
       link.setAttribute("download", `MPLAD_High_Risk_Prioritization_Report_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setGeneratingReport(null);
+    }
+  };
+
+  const handleExportHighRiskXLS = async () => {
+    setGeneratingReport('high-risk-xls');
+    try {
+      const res = await api.getProjects({ risk_level: 'HIGH,CRITICAL', page: 1, page_size: 200 });
+      const items = res.items || [];
+      const excelData = items.map(p => ({
+        "Project ID": p.project_id,
+        "Work Description": p.work_description || '',
+        "Category": p.category || '',
+        "MP Name": p.mp_name || '',
+        "Constituency": p.constituency || '',
+        "State": p.state || '',
+        "Sanction Amount (₹)": p.recommended_amount || 0,
+        "Final Amount (₹)": p.final_amount || 0,
+        "Cost Deviation %": p.cost_deviation_pct || 0,
+        "Risk Score": p.risk_score || 0,
+        "Risk Level": p.risk_level || '',
+        "Primary Reason": p.primary_reason || ''
+      }));
+      exportToExcel(excelData, 'MPLAD_High_Risk_Prioritization_Report', 'High Risk Registry');
     } catch (err) {
       console.error('Export error:', err);
     } finally {
@@ -86,24 +116,41 @@ export const ReportsPage = () => {
     if (!states || states.length === 0) return;
     const headers = ["State", "Total Works", "Sanction Budget (INR)", "Certified Final (INR)", "Completed Works", "Unverified Works", "High Risk Works", "Average Risk Score"];
     const rows = states.map(s => [
-      `"${s.state}"`,
-      s.total_projects,
-      s.total_recommended,
-      s.total_final,
-      s.completed_count,
-      s.unverified_count,
-      s.high_risk_count,
-      s.avg_risk_score
+      `"${(s.state || '').replace(/"/g, '""')}"`,
+      s.total_projects || 0,
+      s.total_recommended || 0,
+      s.total_final || 0,
+      s.completed_count || 0,
+      s.unverified_count || 0,
+      s.high_risk_count || 0,
+      s.avg_risk_score || 0
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `MPLAD_State_Analytics_Report_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportStateXLS = () => {
+    if (!states || states.length === 0) return;
+    const excelData = states.map(s => ({
+      "State": s.state,
+      "Total Works": s.total_projects || 0,
+      "Sanction Budget (₹)": s.total_recommended || 0,
+      "Certified Final (₹)": s.total_final || 0,
+      "Completed Works": s.completed_count || 0,
+      "Unverified Works": s.unverified_count || 0,
+      "High Risk Works": s.high_risk_count || 0,
+      "Average Risk Score": s.avg_risk_score || 0
+    }));
+    exportToExcel(excelData, 'MPLAD_State_Analytics_Report', 'State Regional Digest');
   };
 
   return (
@@ -143,9 +190,21 @@ export const ReportsPage = () => {
 
           <div className="space-y-2 pt-2 border-t border-slate-100">
             <button
+              onClick={handleExportHighRiskXLS}
+              disabled={generatingReport === 'high-risk-xls'}
+              className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
+            >
+              {generatingReport === 'high-risk-xls' ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+              )}
+              <span>Export Prioritized Works (Excel .xlsx)</span>
+            </button>
+            <button
               onClick={handleExportHighRiskCSV}
               disabled={generatingReport === 'high-risk-csv'}
-              className="w-full px-4 py-2 bg-gov-800 hover:bg-gov-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-colors"
+              className="w-full px-4 py-2 bg-gov-800 hover:bg-gov-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
             >
               {generatingReport === 'high-risk-csv' ? (
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -156,7 +215,7 @@ export const ReportsPage = () => {
             </button>
             <button
               onClick={() => navigate('/high-risk?risk=CRITICAL')}
-              className="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <span>View In Workbench</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -178,10 +237,17 @@ export const ReportsPage = () => {
 
           <div className="space-y-2 pt-2 border-t border-slate-100">
             <button
-              onClick={handleExportStateCSV}
-              className="w-full px-4 py-2 bg-gov-800 hover:bg-gov-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-colors"
+              onClick={handleExportStateXLS}
+              className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export State Analytics (Excel .xlsx)</span>
+            </button>
+            <button
+              onClick={handleExportStateCSV}
+              className="w-full px-4 py-2 bg-gov-800 hover:bg-gov-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
               <span>Export State Analytics (CSV)</span>
             </button>
             <button

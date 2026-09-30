@@ -37,7 +37,6 @@ export const Sidebar = ({
   const { isDark, toggleTheme, glassIntensity, setGlassIntensity } = useTheme();
 
   const quickAccessItems = [
-    { to: '/portfolio', label: 'Opening Portfolio', icon: Landmark, badge: 'Home', badgeColor: 'bg-blue-950/80 text-blue-300 border-blue-800/80' },
     { to: '/', label: 'Overview Dashboard', icon: Clock, badge: 'Live' },
     { to: '/high-risk', label: 'Priority Review Queue', icon: ShieldAlert, badge: '8 Critical', badgeColor: 'bg-red-950/80 text-red-300 border-red-800/80' },
   ];
@@ -98,17 +97,21 @@ export const Sidebar = ({
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-blue-600/30 text-blue-200 border border-blue-500/40 font-bold shadow-xs'
+                        ? 'bg-blue-600/40 text-white border border-blue-400/50 font-bold shadow-xs'
                         : 'text-slate-300 hover:bg-white/10 hover:text-white'
                     }`
                   }
                 >
-                  <Icon className="w-4 h-4 text-slate-400" />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-slate-300 border border-white/10">
-                      {item.badge}
-                    </span>
+                  {({ isActive }) => (
+                    <>
+                      <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                      <span className="flex-1">{item.label}</span>
+                      {item.badge && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 text-slate-300 border border-white/10">
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
                   )}
                 </NavLink>
               );
@@ -131,13 +134,17 @@ export const Sidebar = ({
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-blue-600/30 text-blue-200 border border-blue-500/40 font-bold shadow-xs'
+                          ? 'bg-blue-600/40 text-white border border-blue-400/50 font-bold shadow-xs'
                           : 'text-slate-300 hover:bg-white/10 hover:text-white'
                       }`
                     }
                   >
-                    <Icon className="w-4 h-4 text-slate-400" />
-                    <span className="flex-1">{item.label}</span>
+                    {({ isActive }) => (
+                      <>
+                        <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="flex-1">{item.label}</span>
+                      </>
+                    )}
                   </NavLink>
                 );
               })}
@@ -160,13 +167,17 @@ export const Sidebar = ({
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-blue-600/30 text-blue-200 border border-blue-500/40 font-bold shadow-xs'
+                          ? 'bg-blue-600/40 text-white border border-blue-400/50 font-bold shadow-xs'
                           : 'text-slate-300 hover:bg-white/10 hover:text-white'
                       }`
                     }
                   >
-                    <Icon className="w-4 h-4 text-slate-400" />
-                    <span className="flex-1">{item.label}</span>
+                    {({ isActive }) => (
+                      <>
+                        <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="flex-1">{item.label}</span>
+                      </>
+                    )}
                   </NavLink>
                 );
               })}
@@ -260,24 +271,34 @@ export const Sidebar = ({
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all group relative ${
+                    `flex items-center gap-3 py-2 rounded-xl text-xs font-semibold transition-all group relative ${
+                      isCollapsed ? 'justify-center px-2' : 'px-3'
+                    } ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 font-bold dark:bg-blue-600/35 dark:text-blue-200 dark:border dark:border-blue-500/40'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold dark:bg-blue-600 dark:text-white dark:border dark:border-blue-400/50'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
                     }`
                   }
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white transition-colors" />
-                  
-                  {!isCollapsed && (
-                    <span className="flex-1 truncate">{item.label}</span>
-                  )}
+                  {({ isActive }) => (
+                    <>
+                      <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                        isActive 
+                          ? 'text-white drop-shadow-sm' 
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white'
+                      }`} />
+                      
+                      {!isCollapsed && (
+                        <span className="flex-1 truncate">{item.label}</span>
+                      )}
 
-                  {!isCollapsed && item.badge && (
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${item.badgeColor || 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10'}`}>
-                      {item.badge}
-                    </span>
+                      {!isCollapsed && item.badge && (
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${item.badgeColor || 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10'}`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
                   )}
                 </NavLink>
               );
@@ -299,24 +320,34 @@ export const Sidebar = ({
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all group relative ${
+                      `flex items-center gap-3 py-2 rounded-xl text-xs font-semibold transition-all group relative ${
+                        isCollapsed ? 'justify-center px-2' : 'px-3'
+                      } ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 font-bold dark:bg-blue-600/35 dark:text-blue-200 dark:border dark:border-blue-500/40'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold dark:bg-blue-600 dark:text-white dark:border dark:border-blue-400/50'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
                       }`
                     }
                     title={isCollapsed ? item.label : undefined}
                   >
-                    <Icon className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white transition-colors" />
-                    
-                    {!isCollapsed && (
-                      <span className="flex-1 truncate">{item.label}</span>
-                    )}
+                    {({ isActive }) => (
+                      <>
+                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive 
+                            ? 'text-white drop-shadow-sm' 
+                            : 'text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white'
+                        }`} />
+                        
+                        {!isCollapsed && (
+                          <span className="flex-1 truncate">{item.label}</span>
+                        )}
 
-                    {!isCollapsed && item.badge && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
-                        {item.badge}
-                      </span>
+                        {!isCollapsed && item.badge && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                   </NavLink>
                 );
@@ -339,24 +370,34 @@ export const Sidebar = ({
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all group relative ${
+                      `flex items-center gap-3 py-2 rounded-xl text-xs font-semibold transition-all group relative ${
+                        isCollapsed ? 'justify-center px-2' : 'px-3'
+                      } ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 font-bold dark:bg-blue-600/35 dark:text-blue-200 dark:border dark:border-blue-500/40'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold dark:bg-blue-600 dark:text-white dark:border dark:border-blue-400/50'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
                       }`
                     }
                     title={isCollapsed ? item.label : undefined}
                   >
-                    <Icon className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white transition-colors" />
-                    
-                    {!isCollapsed && (
-                      <span className="flex-1 truncate">{item.label}</span>
-                    )}
+                    {({ isActive }) => (
+                      <>
+                        <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive 
+                            ? 'text-white drop-shadow-sm' 
+                            : 'text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white'
+                        }`} />
+                        
+                        {!isCollapsed && (
+                          <span className="flex-1 truncate">{item.label}</span>
+                        )}
 
-                    {!isCollapsed && item.badge && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                        {item.badge}
-                      </span>
+                        {!isCollapsed && item.badge && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                            {item.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                   </NavLink>
                 );

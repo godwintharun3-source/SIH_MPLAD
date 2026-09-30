@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Database, 
   ShieldCheck, 
@@ -7,10 +7,57 @@ import {
   Layers, 
   AlertCircle, 
   CheckCircle2,
-  FileText
+  FileText,
+  FileSpreadsheet,
+  AlertTriangle,
+  HeartHandshake,
+  Download,
+  Calendar,
+  Landmark
 } from 'lucide-react';
+import { api } from '../services/api';
+import { exportToExcel } from '../utils/excelExport';
 
 export const TransparencyPage = () => {
+  const [calamitySummary, setCalamitySummary] = useState(null);
+  const [calamityList, setCalamityList] = useState([]);
+  const [calamityLoading, setCalamityLoading] = useState(true);
+  const [calamityFilter, setCalamityFilter] = useState('All');
+
+  useEffect(() => {
+    Promise.all([
+      api.getCalamitySummary().catch(() => null),
+      api.getCalamityFunds().catch(() => [])
+    ]).then(([summary, list]) => {
+      if (summary) setCalamitySummary(summary);
+      if (list) setCalamityList(list);
+    }).finally(() => {
+      setCalamityLoading(false);
+    });
+  }, []);
+
+  const handleExportCalamityXLS = () => {
+    if (!calamityList || calamityList.length === 0) return;
+    const excelData = calamityList.map(c => ({
+      "Consent ID": c.id,
+      "MP Name": c.mp_name,
+      "House": c.house,
+      "State": c.state,
+      "Calamity Incident": c.calamity_name,
+      "Calamity Type": c.calamity_type,
+      "Consent Amount (₹)": c.consent_amount,
+      "Consent Amount (₹ Cr)": +(c.consent_amount / 1e7).toFixed(2),
+      "Consent Date": c.consent_date
+    }));
+    exportToExcel(excelData, 'MoSPI_Calamity_Relief_Consents', 'Calamity Relief');
+  };
+
+  const filteredCalamities = calamityList.filter(c => {
+    if (calamityFilter === 'All') return true;
+    if (calamityFilter === 'Punjab') return c.calamity_name.toLowerCase().includes('punjab');
+    if (calamityFilter === 'Kerala') return c.calamity_name.toLowerCase().includes('wayanad') || c.calamity_name.toLowerCase().includes('meppadi') || c.calamity_name.toLowerCase().includes('vilangad');
+    return true;
+  });
   return (
     <div className="space-y-6 pb-16 max-w-5xl mx-auto">
       
@@ -169,6 +216,131 @@ export const TransparencyPage = () => {
           <span>
             <strong>100% Exact Match Verified</strong>: All calculated system dashboard metrics match the official MoSPI reference baseline with zero discrepancy.
           </span>
+        </div>
+      </div>
+
+      {/* 5. Official Calamity & Disaster Relief Dataset */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+              <HeartHandshake className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span>5. Official Calamity & Disaster Relief Consents</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                  {calamityList.length} Consents Ingested
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Official MoSPI records of MP funds voluntarily contributed toward national and state disaster relief funds
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleExportCalamityXLS}
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Export Calamity XLS</span>
+          </button>
+        </div>
+
+        {/* Calamity Metric Highlights */}
+        {calamitySummary && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="text-[10px] uppercase font-bold text-slate-500">Total Consented</div>
+              <div className="text-base font-black text-slate-900 font-mono mt-0.5">
+                ₹{(calamitySummary.total_amount / 10000000).toFixed(2)} Cr
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5">{calamitySummary.total_consents} individual consents</div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="text-[10px] uppercase font-bold text-slate-500">Punjab Floods 2025</div>
+              <div className="text-base font-black text-blue-700 font-mono mt-0.5">₹9.71 Cr</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">12 MP allocations</div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="text-[10px] uppercase font-bold text-slate-500">Wayanad / Meppadi 2024</div>
+              <div className="text-base font-black text-emerald-700 font-mono mt-0.5">₹4.45 Cr</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">18 MP allocations</div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="text-[10px] uppercase font-bold text-slate-500">House Distribution</div>
+              <div className="text-base font-black text-purple-700 font-mono mt-0.5">RS: ₹10.45 Cr</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">LS: ₹4.06 Cr</div>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-2">
+          {['All', 'Punjab', 'Kerala'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setCalamityFilter(f)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                calamityFilter === f
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+              }`}
+            >
+              {f === 'All' ? 'All Disasters (32)' : f === 'Punjab' ? 'Punjab Floods 2025 (12)' : 'Kerala Landslides 2024 (18)'}
+            </button>
+          ))}
+        </div>
+
+        {/* Table of Ingested Calamity Records */}
+        <div className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="max-h-72 overflow-y-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-100/90 text-slate-700 font-bold border-b border-slate-200 sticky top-0 z-10">
+                <tr>
+                  <th className="px-3 py-2">MP Name</th>
+                  <th className="px-2.5 py-2">House & State</th>
+                  <th className="px-3 py-2">Calamity / Incident</th>
+                  <th className="px-3 py-2 text-right">Consented Amount</th>
+                  <th className="px-3 py-2 text-right">Date of Consent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {calamityLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-8 text-center text-slate-500 font-mono">
+                      Loading official calamity relief consents...
+                    </td>
+                  </tr>
+                ) : filteredCalamities.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-3 py-2 font-bold text-slate-900">{item.mp_name}</td>
+                    <td className="px-2.5 py-2">
+                      <span className="text-slate-700">{item.state}</span>
+                      <span className={`ml-1.5 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+                        item.house === 'Lok Sabha' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
+                      }`}>
+                        {item.house === 'Lok Sabha' ? 'LS' : 'RS'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className="text-slate-800 font-medium">{item.calamity_name}</span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono font-bold text-emerald-700">
+                      ₹{item.consent_amount >= 10000000 
+                        ? `${(item.consent_amount / 10000000).toFixed(2)} Cr` 
+                        : `${(item.consent_amount / 100000).toFixed(2)} Lakh`}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-slate-500">{item.consent_date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

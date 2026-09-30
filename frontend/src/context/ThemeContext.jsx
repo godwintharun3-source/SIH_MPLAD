@@ -4,9 +4,15 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
+    const sessionInit = sessionStorage.getItem("mplad_theme_init");
+    if (!sessionInit) {
+      sessionStorage.setItem("mplad_theme_init", "light");
+      localStorage.setItem("mplad_theme", "light");
+      return "light"; // Default to Light Mode as requested
+    }
     const saved = localStorage.getItem("mplad_theme");
     if (saved === "light" || saved === "dark") return saved;
-    return "dark"; // Default to Apple Liquid Glass dark mode
+    return "light";
   });
 
   const [glassIntensity, setGlassIntensity] = useState(() => {

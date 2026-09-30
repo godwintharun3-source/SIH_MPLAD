@@ -41,12 +41,13 @@ class NotificationService {
    * Dispatches a native Chrome/Browser Notification and logs to in-app stream
    */
   sendNotification(title, options = {}) {
+    const logoUrl = typeof window !== 'undefined' ? `${window.location.origin}/assets/logo.jpg` : '/assets/logo.jpg';
     const item = {
       id: Date.now() + Math.random(),
       title,
       body: options.body || '',
-      icon: options.icon || '/favicon.ico',
-      badge: options.badge || '/favicon.ico',
+      icon: options.icon || logoUrl,
+      badge: options.badge || logoUrl,
       tag: options.tag || 'mplad-alert',
       timestamp: new Date().toLocaleTimeString(),
       type: options.type || 'INFO'
@@ -62,8 +63,8 @@ class NotificationService {
       try {
         const notif = new Notification(title, {
           body: options.body,
-          icon: 'https://img.icons8.com/fluency/96/courthouse.png',
-          badge: 'https://img.icons8.com/fluency/48/law.png',
+          icon: logoUrl,
+          badge: logoUrl,
           tag: options.tag || 'mplad-audit-update',
           renotify: true,
           requireInteraction: options.requireInteraction || false,

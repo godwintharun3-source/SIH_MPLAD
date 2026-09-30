@@ -89,7 +89,7 @@ class DashboardSummary(BaseModel):
 
 class AIQueryRequest(BaseModel):
     query: str
-    context_project_id: Optional[str] = None
+    context_project_id: Optional[Union[str, int]] = None
 
 class AIQueryResponse(BaseModel):
     query: str

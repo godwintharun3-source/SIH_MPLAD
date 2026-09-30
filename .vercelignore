@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Exclude large uncompressed SQLite database (24MB .gz is included and decompressed to /tmp)
+data/processed/mplads_intelligence.db
+data/processed/*.csv
+
+# Exclude development files and artifacts
+.git/
+.github/
+.DS_Store
+scratch/
+tests/
+*.png
+*.jpg
+*.jpeg
+*.mp3
+Dockerfile
+docker-compose.yml
+render.yaml

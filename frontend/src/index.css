@@ -666,3 +666,234 @@ html.light .anomaly-pill {
   background: rgba(100, 116, 139, 0.7);
 }
 
+/* ==========================================================================
+   LIQUID GLASS TRANSPARENCY & APPLICATION STYLING
+   ========================================================================== */
+.glass-panel {
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+html.dark .glass-panel {
+  background: rgba(10, 15, 29, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+}
+
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 20px 50px rgba(31, 38, 135, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Glass Specular Top Sheen Highlight */
+.glass-sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   POPUP ENTRANCE & STAGGERED STEP-BY-STEP REVEAL
+   ========================================================================== */
+.app-entry-popup {
+  animation: appPopupZoom 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes appPopupZoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.route-stagger-container {
+  animation: routeFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes routeFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Step-by-step element stagger classes */
+.stagger-1 { animation: staggerSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both; }
+.stagger-2 { animation: staggerSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.10s both; }
+.stagger-3 { animation: staggerSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both; }
+.stagger-4 { animation: staggerSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both; }
+.stagger-5 { animation: staggerSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.34s both; }
+
+@keyframes staggerSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   TRANSPARENT CRYSTAL PLAYING CARDS & CIRCULAR ORBIT SYSTEM
+   ========================================================================== */
+.cards-zoom-stage {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.playing-cards-deck {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  position: relative;
+  width: 100%;
+  height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Base Pure Transparent Crystal Glass Card (Zero solid white, black or blue fill) */
+.crystal-card-base {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+  backdrop-filter: blur(20px) saturate(190%) contrast(105%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) contrast(105%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.30) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.45), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.65) !important;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.45s ease, z-index 0.2s !important;
+  will-change: transform, opacity, box-shadow;
+  transform-style: preserve-3d;
+}
+
+/* Crystal Color Tint Variants with Specular Gemstone Glow */
+.crystal-cyan {
+  background: linear-gradient(145deg, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.03) 100%) !important;
+  border-color: rgba(6, 182, 212, 0.55) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.5), 0 0 30px -4px rgba(6, 182, 212, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.7) !important;
+}
+.crystal-cyan:hover {
+  border-color: rgba(6, 182, 212, 0.9) !important;
+  box-shadow: 0 24px 50px -4px rgba(0, 0, 0, 0.6), 0 0 45px 2px rgba(6, 182, 212, 0.6), inset 0 1.5px 3px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.crystal-amber {
+  background: linear-gradient(145deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.03) 100%) !important;
+  border-color: rgba(245, 158, 11, 0.55) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.5), 0 0 30px -4px rgba(245, 158, 11, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.7) !important;
+}
+.crystal-amber:hover {
+  border-color: rgba(245, 158, 11, 0.9) !important;
+  box-shadow: 0 24px 50px -4px rgba(0, 0, 0, 0.6), 0 0 45px 2px rgba(245, 158, 11, 0.6), inset 0 1.5px 3px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.crystal-rose {
+  background: linear-gradient(145deg, rgba(244, 63, 94, 0.12) 0%, rgba(244, 63, 94, 0.03) 100%) !important;
+  border-color: rgba(244, 63, 94, 0.55) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.5), 0 0 30px -4px rgba(244, 63, 94, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.7) !important;
+}
+.crystal-rose:hover {
+  border-color: rgba(244, 63, 94, 0.9) !important;
+  box-shadow: 0 24px 50px -4px rgba(0, 0, 0, 0.6), 0 0 45px 2px rgba(244, 63, 94, 0.6), inset 0 1.5px 3px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.crystal-purple {
+  background: linear-gradient(145deg, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0.03) 100%) !important;
+  border-color: rgba(168, 85, 247, 0.55) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.5), 0 0 30px -4px rgba(168, 85, 247, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.7) !important;
+}
+.crystal-purple:hover {
+  border-color: rgba(168, 85, 247, 0.9) !important;
+  box-shadow: 0 24px 50px -4px rgba(0, 0, 0, 0.6), 0 0 45px 2px rgba(168, 85, 247, 0.6), inset 0 1.5px 3px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.crystal-emerald {
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.03) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.5), 0 0 30px -4px rgba(16, 185, 129, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.7) !important;
+}
+.crystal-emerald:hover {
+  border-color: rgba(16, 185, 129, 0.9) !important;
+  box-shadow: 0 24px 50px -4px rgba(0, 0, 0, 0.6), 0 0 45px 2px rgba(16, 185, 129, 0.6), inset 0 1.5px 3px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Crystal Diagonal Prismatic Glare Sweep */
+.crystal-glare {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.22) 48%, rgba(255, 255, 255, 0.05) 54%, transparent 68%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Crystal Geometric Lattice Pattern for Backed Cards */
+.crystal-card-back-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.04) 75%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 16px 16px, 20px 20px, 20px 20px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Card Hover Elevation */
+.playing-card-item:hover {
+  z-index: 50 !important;
+}
+
+/* ==========================================================================
+   CRAZY ROBOT RUNNING SPRINT ANIMATION
+   ========================================================================== */
+@keyframes crazyRobotSprintAcross {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+  5% {
+    transform: translateX(10px) rotate(-10deg) scaleX(1);
+  }
+  42% {
+    transform: translateX(-78vw) rotate(-16deg) scaleX(1);
+  }
+  48% {
+    transform: translateX(-80vw) rotate(0deg) scaleX(1);
+  }
+  52% {
+    transform: translateX(-80vw) rotate(0deg) scaleX(-1);
+  }
+  58% {
+    transform: translateX(-78vw) rotate(8deg) scaleX(-1);
+  }
+  92% {
+    transform: translateX(10px) rotate(16deg) scaleX(-1);
+  }
+  96% {
+    transform: translateX(0) translateY(-22px) rotate(0deg) scaleX(1);
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg) scaleX(1);
+  }
+}
+
+.animate-crazy-robot-dash {
+  animation: crazyRobotSprintAcross 3.2s cubic-bezier(0.25, 1, 0.3, 1) forwards;
+}
+
+

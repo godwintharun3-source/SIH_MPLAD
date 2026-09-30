@@ -23,7 +23,7 @@ from backend.app.services.risk_scoring import compute_project_risk
 router = APIRouter(prefix="/api")
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=20.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -41,10 +41,11 @@ def health_check():
 @router.get("/dashboard/summary", response_model=DashboardSummary)
 def get_dashboard_summary(
     house: Optional[str] = None,
-    state: Optional[str] = None
+    state: Optional[str] = None,
+    mp_name: Optional[str] = None
 ):
     global _cached_summary
-    is_filtered = (house and house != "All") or (state and state != "All")
+    is_filtered = (house and house != "All") or (state and state != "All") or (mp_name and mp_name != "All")
     
     if not is_filtered and _cached_summary is not None:
         return _cached_summary
@@ -61,6 +62,9 @@ def get_dashboard_summary(
     if state and state != "All":
         mp_where.append("state = ?")
         mp_params.append(state)
+    if mp_name and mp_name != "All":
+        mp_where.append("mp_name = ?")
+        mp_params.append(mp_name)
     mp_sql = (" WHERE " + " AND ".join(mp_where)) if mp_where else ""
 
     # Where clauses for Projects
@@ -72,6 +76,9 @@ def get_dashboard_summary(
     if state and state != "All":
         p_where.append("state = ?")
         p_params.append(state)
+    if mp_name and mp_name != "All":
+        p_where.append("mp_name = ?")
+        p_params.append(mp_name)
     p_sql = (" WHERE " + " AND ".join(p_where)) if p_where else ""
 
     # Where clauses for Expenditures
@@ -83,6 +90,9 @@ def get_dashboard_summary(
     if state and state != "All":
         exp_where.append("state = ?")
         exp_params.append(state)
+    if mp_name and mp_name != "All":
+        exp_where.append("mp_name = ?")
+        exp_params.append(mp_name)
     exp_sql = (" WHERE " + " AND ".join(exp_where)) if exp_where else ""
     
     # MP Summary totals
@@ -195,6 +205,7 @@ def get_projects(
     state: Optional[str] = None,
     district: Optional[str] = None,
     constituency: Optional[str] = None,
+    mp_name: Optional[str] = None,
     category: Optional[str] = None,
     risk_level: Optional[str] = None,
     completion_status: Optional[str] = None,
@@ -204,7 +215,7 @@ def get_projects(
 ):
     if page < 1:
         page = 1
-    if page_size < 1 or page_size > 100:
+    if page_size < 1 or page_size > 500:
         page_size = 20
         
     allowed_sort = ["risk_score", "cost_deviation_pct", "recommended_amount", "final_amount", "recommendation_date", "project_id"]
@@ -228,16 +239,31 @@ def get_projects(
     if constituency and constituency != "All":
         where_clauses.append("constituency = ?")
         params.append(constituency)
+    if mp_name and mp_name != "All":
+        where_clauses.append("mp_name = ?")
+        params.append(mp_name)
     if category and category != "All":
         cat_clause, cat_params = get_category_filter(category)
         where_clauses.append(cat_clause)
         params.extend(cat_params)
     if risk_level and risk_level != "All":
-        where_clauses.append("risk_level = ?")
-        params.append(risk_level)
+        levels = [l.strip() for l in risk_level.split(",") if l.strip()]
+        if len(levels) == 1:
+            where_clauses.append("risk_level = ?")
+            params.append(levels[0])
+        elif len(levels) > 1:
+            placeholders = ", ".join(["?"] * len(levels))
+            where_clauses.append(f"risk_level IN ({placeholders})")
+            params.extend(levels)
     if completion_status and completion_status != "All":
-        where_clauses.append("completion_status = ?")
-        params.append(completion_status)
+        statuses = [s.strip() for s in completion_status.split(",") if s.strip()]
+        if len(statuses) == 1:
+            where_clauses.append("completion_status = ?")
+            params.append(statuses[0])
+        elif len(statuses) > 1:
+            placeholders = ", ".join(["?"] * len(statuses))
+            where_clauses.append(f"completion_status IN ({placeholders})")
+            params.extend(statuses)
     if search:
         where_clauses.append("(project_id LIKE ? OR work_description LIKE ? OR mp_name LIKE ? OR ida LIKE ?)")
         s_pat = f"%{search}%"
@@ -249,12 +275,13 @@ def get_projects(
     count_sql = f"SELECT count(*) as total FROM projects{where_sql}"
     total = cursor.execute(count_sql, tuple(params)).fetchone()["total"]
     
-    # Fetch paginated items
+    # Order by
+    order_dir = "DESC" if sort_dir.lower() == "desc" else "ASC"
+    sql = f"SELECT * FROM projects{where_sql} ORDER BY {sort_by} {order_dir} LIMIT ? OFFSET ?"
     offset = (page - 1) * page_size
-    query_sql = f"SELECT * FROM projects{where_sql} ORDER BY {sort_by} {sort_dir.upper()} LIMIT ? OFFSET ?"
-    params_with_paging = params + [page_size, offset]
+    params.extend([page_size, offset])
     
-    rows = cursor.execute(query_sql, tuple(params_with_paging)).fetchall()
+    rows = cursor.execute(sql, tuple(params)).fetchall()
     conn.close()
     
     items = []
@@ -292,10 +319,12 @@ def get_projects(
     )
 
 @router.get("/projects/high-risk", response_model=List[ProjectSummary])
+@router.get("/high-risk-works", response_model=List[ProjectSummary])
 def get_high_risk_projects(
     limit: int = 50,
     house: Optional[str] = None,
-    state: Optional[str] = None
+    state: Optional[str] = None,
+    mp_name: Optional[str] = None
 ):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -309,6 +338,9 @@ def get_high_risk_projects(
     if state and state != "All":
         where_clauses.append("state = ?")
         params.append(state)
+    if mp_name and mp_name != "All":
+        where_clauses.append("mp_name = ?")
+        params.append(mp_name)
         
     sql = f"SELECT * FROM projects WHERE {' AND '.join(where_clauses)} ORDER BY risk_score DESC, cost_deviation_pct DESC LIMIT ?"
     params.append(limit)
@@ -489,8 +521,12 @@ def get_completion_anomalies(limit: int = 50):
     conn.close()
     return results
 
+# Global cache for sector benchmarks to optimize query performance
+_cached_sector_benchmarks = None
+
 @router.get("/anomalies/sector")
 def get_sector_anomalies(limit: int = 50):
+    global _cached_sector_benchmarks
     import numpy as np
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -508,36 +544,41 @@ def get_sector_anomalies(limit: int = 50):
         ('Public Passenger Amenities', ['%bus stand%', '%passenger shed%', '%waiting hall%', '%shelter%'])
     ]
     
-    sector_benchmarks = {}
-    for sector_name, kws in sector_taxonomy:
-        clauses = ' OR '.join([f"work_description LIKE '{kw}'" for kw in kws])
-        rows = cursor.execute(f"SELECT recommended_amount FROM projects WHERE ({clauses}) AND recommended_amount > 0").fetchall()
-        amounts = [r["recommended_amount"] for r in rows]
-        if len(amounts) > 0:
-            sector_benchmarks[sector_name] = {
-                'keywords': kws,
-                'count': len(amounts),
-                'median': float(np.median(amounts)),
-                'q25': float(np.percentile(amounts, 25)),
-                'q75': float(np.percentile(amounts, 75)),
-                'min': float(np.min(amounts)),
-                'max': float(np.max(amounts))
-            }
+    if _cached_sector_benchmarks is None:
+        benchmarks = {}
+        for sector_name, kws in sector_taxonomy:
+            clauses = ' OR '.join([f"work_description LIKE '{kw}'" for kw in kws])
+            rows = cursor.execute(f"SELECT recommended_amount FROM projects WHERE (category = ? OR {clauses}) AND recommended_amount > 0", (sector_name,)).fetchall()
+            amounts = [r["recommended_amount"] for r in rows]
+            if len(amounts) > 0:
+                benchmarks[sector_name] = {
+                    'keywords': kws,
+                    'count': len(amounts),
+                    'median': float(np.median(amounts)),
+                    'q25': float(np.percentile(amounts, 25)),
+                    'q75': float(np.percentile(amounts, 75)),
+                    'min': float(np.min(amounts)),
+                    'max': float(np.max(amounts))
+                }
+        _cached_sector_benchmarks = benchmarks
+
+    sector_benchmarks = _cached_sector_benchmarks
             
     candidates = []
     for sector_name, meta in sector_benchmarks.items():
         clauses = ' OR '.join([f"work_description LIKE '{kw}'" for kw in meta['keywords']])
+        threshold = max(meta['q75'], meta['median'] * 1.25)
         query = f"""
             SELECT 
                 project_id, work_id, work_description, category, mp_name, constituency, state, district,
                 recommended_amount, final_amount, recommendation_date,
                 risk_score, risk_level, primary_reason
             FROM projects
-            WHERE ({clauses}) AND recommended_amount > {meta['median'] * 2.0}
+            WHERE (category = ? OR {clauses}) AND recommended_amount >= {threshold}
             ORDER BY recommended_amount DESC
-            LIMIT 15
+            LIMIT 10
         """
-        rows = cursor.execute(query).fetchall()
+        rows = cursor.execute(query, (sector_name,)).fetchall()
         for r in rows:
             rec_amt = float(r["recommended_amount"] or 0.0)
             med_amt = meta['median']
@@ -578,14 +619,32 @@ def get_sector_anomalies(limit: int = 50):
     return candidates[:limit]
 
 @router.get("/anomalies/duplicate")
+@router.get("/anomalies/duplicates")
 def get_duplicate_anomalies(limit: int = 50):
     conn = get_db_connection()
     cursor = conn.cursor()
     rows = cursor.execute(
-        "SELECT min(transaction_id) as transaction_id, min(matched_project_id) as matched_project_id, vendor, constituency, state, mp_name, work_description, expenditure_amount, expenditure_date, count(*) as repeat_count, count(*) as sig_repeat_count, sum(expenditure_amount) as total_amount "
-        "FROM expenditures WHERE is_exact_duplicate = 1 "
-        "GROUP BY vendor, constituency, expenditure_amount, expenditure_date "
-        "HAVING repeat_count > 1 ORDER BY repeat_count DESC, total_amount DESC LIMIT ?",
+        """
+        SELECT 
+            min(transaction_id) as transaction_id, 
+            min(matched_project_id) as matched_project_id, 
+            vendor, 
+            constituency, 
+            state, 
+            mp_name, 
+            work_description, 
+            expenditure_amount, 
+            min(expenditure_date) as expenditure_date, 
+            count(*) as repeat_count, 
+            count(*) as sig_repeat_count, 
+            sum(expenditure_amount) as total_amount
+        FROM expenditures 
+        WHERE is_exact_duplicate = 1 OR is_repeated_signature = 1
+        GROUP BY vendor, mp_name, constituency, expenditure_amount
+        HAVING repeat_count > 1 
+        ORDER BY repeat_count DESC, total_amount DESC 
+        LIMIT ?
+        """,
         (limit,)
     ).fetchall()
     conn.close()
@@ -796,6 +855,19 @@ def get_house_analytics(state: Optional[str] = None):
         "total_high": houses_data["Lok Sabha"]["risk_distribution"]["HIGH"] + houses_data["Rajya Sabha"]["risk_distribution"]["HIGH"]
     }
 
+@router.get("/mps/filter-options")
+def get_mp_filter_options():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    mp_rows = cursor.execute("SELECT mp_name, house, state, constituency FROM mp_summaries ORDER BY mp_name ASC").fetchall()
+    state_rows = cursor.execute("SELECT DISTINCT state FROM mp_summaries WHERE state IS NOT NULL AND state != '' ORDER BY state ASC").fetchall()
+    conn.close()
+    return {
+        "houses": ["Lok Sabha", "Rajya Sabha"],
+        "states": [r["state"] for r in state_rows],
+        "mps": [dict(r) for r in mp_rows]
+    }
+
 @router.get("/mps/{mp_name}")
 def get_mp_detail(mp_name: str):
     conn = get_db_connection()
@@ -834,6 +906,7 @@ def get_constituencies(limit: int = 100):
     return [dict(r) for r in rows]
 
 @router.get("/analytics/states")
+@router.get("/dashboard/state-matrix")
 def get_state_analytics():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -909,3 +982,43 @@ def recalculate_project_risk(
         is_ml_anomaly=bool(r["is_ml_anomaly"])
     )
     return res
+
+@router.get("/calamity-funds")
+def get_calamity_funds(
+    house: Optional[str] = None,
+    state: Optional[str] = None,
+    calamity_name: Optional[str] = None
+):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    where = []
+    params = []
+    if house and house != "All":
+        where.append("house = ?")
+        params.append(house)
+    if state and state != "All":
+        where.append("state = ?")
+        params.append(state)
+    if calamity_name and calamity_name != "All":
+        where.append("calamity_name = ?")
+        params.append(calamity_name)
+    sql = "SELECT * FROM calamity_funds" + ((" WHERE " + " AND ".join(where)) if where else "") + " ORDER BY consent_amount DESC"
+    rows = cursor.execute(sql, tuple(params)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@router.get("/calamity-funds/summary")
+def get_calamity_funds_summary():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    tot = cursor.execute("SELECT count(*) as count, sum(consent_amount) as total_amount FROM calamity_funds").fetchone()
+    breakdown = cursor.execute("SELECT calamity_name, count(*) as count, sum(consent_amount) as total_amount FROM calamity_funds GROUP BY calamity_name ORDER BY total_amount DESC").fetchall()
+    by_house = cursor.execute("SELECT house, count(*) as count, sum(consent_amount) as total_amount FROM calamity_funds GROUP BY house").fetchall()
+    conn.close()
+    return {
+        "total_consents": int(tot["count"] or 0) if tot else 0,
+        "total_amount": float(tot["total_amount"] or 0.0) if tot else 0.0,
+        "calamity_breakdown": [dict(r) for r in breakdown],
+        "house_breakdown": [dict(r) for r in by_house]
+    }
+

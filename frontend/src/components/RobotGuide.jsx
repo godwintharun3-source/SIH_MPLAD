@@ -836,11 +836,17 @@ export const RobotGuide = ({
     camera.lookAt(0, 0.10, 0);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance'
-    });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+    } catch (webglErr) {
+      console.warn("WebGL initialization skipped in RobotGuide:", webglErr.message);
+      return;
+    }
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
@@ -1440,18 +1446,19 @@ export const RobotGuide = ({
           </div>
         )}
 
-        {/* Badge 4: When tour is toggled off (Hiding Mode) */}
-        {!isTourActive && !isWaving && (
+        {/* Badge 4: When tour is toggled off (Hiding Mode) - show clean upright tooltip on hover so data tables remain unobstructed */}
+        {!isTourActive && !isWaving && isPeekingHovered && (
           <button
             onClick={() => {
               if (onStartTour) onStartTour();
               else if (onToggleTour) onToggleTour();
             }}
-            className="mr-6 mb-[-12px] flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1017]/95 text-cyan-300 border border-cyan-500/60 shadow-2xl backdrop-blur-xl text-xs font-bold animate-bounce hover:scale-105 transition-all z-20 cursor-pointer pointer-events-auto"
+            className="mr-4 mb-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0c1017]/95 text-cyan-300 border border-cyan-500/60 shadow-2xl backdrop-blur-xl text-xs font-bold animate-in fade-in zoom-in-95 hover:scale-105 transition-all z-20 cursor-pointer pointer-events-auto"
+            style={{ transform: 'rotate(9deg)' }}
             title="Click to bring robot out and start tour"
           >
-            <span className="text-sm">🫣</span>
-            <span>*Psst! Hiding here... Click to start tour*</span>
+            <span className="text-sm">🤖</span>
+            <span>Click to start AI Tour</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400" />
           </button>
         )}
